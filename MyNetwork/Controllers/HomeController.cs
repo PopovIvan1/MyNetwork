@@ -28,5 +28,19 @@ namespace MyNetwork.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        public ActionResult ChangeTheme(string theme)
+        {
+            if (theme == "dark")
+            {
+                Response.Cookies.Append("theme", "dark");
+            }
+            else
+            {
+                Response.Cookies.Append("theme", "light");
+            }
+
+            return RedirectToAction("Index", "Home");
+        }
     }
 }
