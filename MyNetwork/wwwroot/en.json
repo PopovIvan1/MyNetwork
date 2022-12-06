@@ -1,0 +1,15 @@
+{
+  "main": "Welcome",
+  "home": "Home",
+  "my page": "My page",
+  "language": "Language:",
+  "english": "English",
+  "russian": "Russian",
+  "theme": "Theme:",
+  "light": "Light",
+  "dark": "Dark",
+  "hello": "Hello,",
+  "logout": "Logout",
+  "register": "Register",
+  "login": "Login"
+}

@@ -15,6 +15,8 @@ namespace MyNetwork.Controllers
 
         public IActionResult Index()
         {
+            if (Response.HttpContext.Request.Cookies["language"] == "ru") TextModel.setContext("ru");
+            else TextModel.setContext("en");
             return View();
         }
 
@@ -39,6 +41,22 @@ namespace MyNetwork.Controllers
             {
                 Response.Cookies.Append("theme", "light");
             }
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        public ActionResult ChangeLanguage(string language)
+        {
+            if (language == "en")
+            {
+                Response.Cookies.Append("language", "en");
+            }
+            else
+            {
+                Response.Cookies.Append("language", "ru");
+            }
+
+            TextModel.setContext(language);
 
             return RedirectToAction("Index", "Home");
         }
