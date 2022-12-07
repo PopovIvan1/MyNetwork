@@ -1,38 +1,32 @@
 ﻿@page
 @model RegisterModel
-@{
-    ViewData["Title"] = "Register";
-}
+@using MyNetwork.Models
 
-<h1>@ViewData["Title"]</h1>
+<h1>@TextModel.Context["register"]</h1>
 
 <div class="row">
     <div class="col-md-4">
         <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Create a new account.</h2>
+            <h2>@TextModel.Context["create new account"]</h2>
             <hr />
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-floating" style="color:black">
                 <input asp-for="Input.Username" class="form-control" autocomplete="username" aria-required="true" />
-                <label asp-for="Input.Username"></label>
-                <span asp-validation-for="Input.Username" class="text-danger"></span>
+                <label asp-for="Input.Username">@TextModel.Context["name"]</label>
             </div>
             <div class="form-floating" style="color:black">
                 <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
-                <label asp-for="Input.Email"></label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
+                <label asp-for="Input.Email">@TextModel.Context["email"]</label>
             </div>
             <div class="form-floating" style="color:black">
                 <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" />
-                <label asp-for="Input.Password"></label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
+                <label asp-for="Input.Password">@TextModel.Context["password"]</label>
             </div>
             <div class="form-floating" style="color:black">
                 <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" />
-                <label asp-for="Input.ConfirmPassword"></label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                <label asp-for="Input.ConfirmPassword">@TextModel.Context["confirm password"]</label>
             </div>
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">@TextModel.Context["register"]</button>
         </form>
     </div>
     <div class="col-md-6 col-md-offset-2">

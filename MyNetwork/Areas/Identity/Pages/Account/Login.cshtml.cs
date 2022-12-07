@@ -14,6 +14,9 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using MyNetwork.Models;
+using Humanizer.Localisation;
+using System.ComponentModel;
 
 namespace MyNetwork.Areas.Identity.Pages.Account
 {
@@ -76,8 +79,25 @@ namespace MyNetwork.Areas.Identity.Pages.Account
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Display(Name = "Remember me?")]
             public bool RememberMe { get; set; }
+        }
+
+        class DisplayNameLanguage : DisplayNameAttribute
+        {
+            private readonly string resourceName;
+            public DisplayNameLanguage(string resourceName)
+                : base()
+            {
+                this.resourceName = resourceName;
+            }
+
+            public override string DisplayName
+            {
+                get
+                {
+                    return TextModel.Context[resourceName];
+                }
+            }
         }
 
         public async Task OnGetAsync(string returnUrl = null)
@@ -111,7 +131,7 @@ namespace MyNetwork.Areas.Identity.Pages.Account
             }
             else
             {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                ModelState.AddModelError(string.Empty, TextModel.Context["invalid login"]);
                 return Page();
             }
         }

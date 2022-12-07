@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using MyNetwork.Models;
 
 namespace MyNetwork.Areas.Identity.Pages.Account
 {
@@ -96,7 +97,6 @@ namespace MyNetwork.Areas.Identity.Pages.Account
             /// </summary>
             [DataType(DataType.Password)]
             [Display(Name = "Confirm password")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
         }
 
@@ -119,7 +119,12 @@ namespace MyNetwork.Areas.Identity.Pages.Account
             var isEmailExist = await _userManager.FindByEmailAsync(Input.Email);
             if (isEmailExist != null) 
             {
-                ModelState.AddModelError(string.Empty, "This email already used");
+                ModelState.AddModelError(string.Empty, TextModel.Context["email taken"]);
+                return Page();
+            }
+            else if (Input.Password != Input.ConfirmPassword) 
+            {
+                ModelState.AddModelError(string.Empty, TextModel.Context["not confirm password"]);
                 return Page();
             }
 
@@ -132,11 +137,11 @@ namespace MyNetwork.Areas.Identity.Pages.Account
                 await _signInManager.SignInAsync(user, isPersistent: false);
                 return LocalRedirect(returnUrl);
             }
-            foreach (var error in result.Errors)
+            else
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                ModelState.AddModelError(string.Empty, TextModel.Context["name taken"]);
+                return Page();
             }
-            return Page();
         }
 
         private IdentityUser CreateUser()

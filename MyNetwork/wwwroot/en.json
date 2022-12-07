@@ -11,5 +11,16 @@
   "hello": "Hello,",
   "logout": "Logout",
   "register": "Register",
-  "login": "Login"
+  "login": "Log in",
+  "local accaunt": "Use a local account to log in.",
+  "remember": "Remember me?",
+  "name": "Name",
+  "password": "Password",
+  "email": "Email",
+  "invalid login": "Invalid login attempt",
+  "create new account": "Create a new account.",
+  "confirm password": "Confirm password",
+  "email taken": "This email already taken",
+  "not confirm password": "Input password not confirm",
+  "name taken": "This username already taken"
 }
