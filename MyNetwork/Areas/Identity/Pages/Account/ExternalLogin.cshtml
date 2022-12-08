@@ -1,0 +1,31 @@
+﻿@page
+@model ExternalLoginModel
+@using MyNetwork.Models
+
+<h1>@TextModel.Context["register"]</h1>
+<hr />
+
+<p id="external-login-description" class="text-info">
+    @(TextModel.Context["authentication success"] + Model.ProviderDisplayName)
+</p>
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-floating" style="color:black">
+                <input asp-for="Input.Username" class="form-control" autocomplete="username" aria-required="true" />
+                <label asp-for="Input.Username">@TextModel.Context["name"]</label>
+            </div>
+            <div class="form-floating" style="color:black">
+                <input asp-for="Input.Email" class="form-control" autocomplete="email" />
+                <label asp-for="Input.Email" class="form-label">@TextModel.Context["email"]</label>
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">@TextModel.Context["register"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -22,5 +22,10 @@
   "confirm password": "Confirm password",
   "email taken": "This email already taken",
   "not confirm password": "Input password not confirm",
-  "name taken": "This username already taken"
+  "name taken": "This username already taken",
+  "provaider error": "Error from external provider: ",
+  "loading error": "Error loading external login information.",
+  "provider login": "Log in using your @provider.DisplayName account",
+  "another server": "Use another service to register.",
+  "authentication success": "You've successfully authenticated with "
 }
