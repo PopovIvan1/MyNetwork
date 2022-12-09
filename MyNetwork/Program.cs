@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyNetwork.Data;
@@ -12,6 +13,11 @@ builder.Services.AddAuthentication().AddTwitter(options =>
 {
     options.ConsumerKey = builder.Configuration["TwitterConsumerAPIKey"];
     options.ConsumerSecret = builder.Configuration["TwitterConsumerSecret"];
+});
+builder.Services.AddAuthentication().AddFacebook(options =>
+{
+    options.AppId = builder.Configuration["FacebookAppId"];
+    options.AppSecret = builder.Configuration["FacebookAppSecret"];
 });
 builder.Services.Configure<IdentityOptions>(options =>
 {
