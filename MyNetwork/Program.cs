@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyNetwork.Data;
@@ -9,15 +8,15 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DbConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
-builder.Services.AddAuthentication().AddTwitter(options =>
-{
-    options.ConsumerKey = builder.Configuration["TwitterConsumerAPIKey"];
-    options.ConsumerSecret = builder.Configuration["TwitterConsumerSecret"];
-});
 builder.Services.AddAuthentication().AddFacebook(options =>
 {
-    options.AppId = builder.Configuration["FacebookAppId"];
-    options.AppSecret = builder.Configuration["FacebookAppSecret"];
+    options.AppId = builder.Configuration.GetConnectionString("FacebookAppId");
+    options.AppSecret = builder.Configuration.GetConnectionString("FacebookAppSecret");
+});
+builder.Services.AddAuthentication().AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration.GetConnectionString("GoogleConsumerAPIKey");
+    options.ClientSecret = builder.Configuration.GetConnectionString("GoogleConsumerSecret");
 });
 builder.Services.Configure<IdentityOptions>(options =>
 {
