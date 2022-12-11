@@ -5,3 +5,16 @@
 <div class="text-center">
     <h1 class="display-4">@TextModel.Context["main"]</h1>
 </div>
+<div class="row" style="border-top-style: solid; border-top-color: red">
+    <div class="col-md-4" style="border-right-style: solid; border-right-color: red">
+        <h2 class="display-4">@TextModel.Context["last views"]</h2>
+    </div>
+    <div class="col-md-4" style="border-right-style: solid; border-right-color: red">
+        <h2 class="display-4">@TextModel.Context["best views"]</h2>
+    </div>
+    <div class="col-md-4">
+        <h2 class="display-4">@TextModel.Context["tags"]</h2>
+        <label class="form-label">@TextModel.Context["input tag"]</label>
+        <input aria-required="true" />
+    </div>
+</div>

@@ -27,5 +27,12 @@
   "loading error": "Ошибка при загрузке внешней информации для входа.",
   "provider login": "Войдите с помощью вашего @provider.DisplayName аккаунта",
   "another server": "Используйте другой сервер для входа.",
-  "authentication success": "Вы авторизировались с помощью "
+  "authentication success": "Вы авторизировались с помощью ",
+  "last views": "Последние обзоры",
+  "best views": "Популярные обзоры",
+  "tags": "Поиск по тегам",
+  "input tag": "Введите тег:",
+  "admin mode": "Режим администратора",
+  "new review": "Создать новый обзор",
+  "my reviews": "Мои обзоры"
 }

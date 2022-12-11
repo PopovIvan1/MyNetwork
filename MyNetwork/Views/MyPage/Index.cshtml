@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "My Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">@TextModel.Context["my page"]</h1>
+</div>
+<div class="row">
+    @{
+        if (await ViewData.Model.IsAdminAsync(User.Identity.Name))
+        {
+            <div class="col-md-2">
+                <form asp-controller="MyPage" asp-action="AdminMode" class="form-horizontal">
+                    <button type="submit" class="btn btn-primary">@TextModel.Context["admin mode"]</button>
+                </form>
+            </div>
+        }
+    }
+    <div class="col-md-2">
+        <form asp-controller="MyPage" asp-action="NewReview" class="form-horizontal">
+            <button type="submit" class="btn btn-primary">@TextModel.Context["new review"]</button>
+        </form>
+    </div>
+</div>
+<h3>@TextModel.Context["my reviews"]</h3>

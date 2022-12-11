@@ -1,4 +1,7 @@
-﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+﻿@using Microsoft.AspNetCore.Identity
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
 
 @{
     string currentTheme = HttpContextAccessor.HttpContext.Request.Cookies["theme"] == null
@@ -33,7 +36,14 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item" style="border-left:solid red">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">@TextModel.Context["my page"]</a>
+                            @if (SignInManager.IsSignedIn(User))
+                            {
+                                <a class="nav-link text-dark" asp-area="" asp-controller="MyPage" asp-action="Index">@TextModel.Context["my page"]</a>
+                            }
+                            else
+                            {
+                                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">@TextModel.Context["my page"]</a>
+                            }
                         </li>
                         <li class="nav-item" style="border-left:solid red">
                             <a class="nav-link text-dark">@TextModel.Context["language"]</a>
