@@ -8,6 +8,11 @@ namespace MyNetwork.Models
             : base(options) { }
 
         public DbSet<User> AspNetUsers { get; set; } = null!;
+        public DbSet<Review> Reviews { get; set; } = null!;
+        public DbSet<Comment> Comments { get; set; } = null!;
+        public DbSet<Rate> Rates { get; set; } = null!;
+        public DbSet<Tag> Tags { get; set; } = null!;
+        public DbSet<ReviewTag> ReviewTags { get; set; } = null!;
 
         public async Task<bool> IsAdminAsync(string username)
         {

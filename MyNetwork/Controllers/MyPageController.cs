@@ -22,12 +22,18 @@ namespace MyNetwork.Controllers
 
         public IActionResult AdminMode()
         {
+            ViewData.Model = db.AspNetUsers;
             return View();
         }
 
         public IActionResult NewReview()
         {
             return View();
+        }
+
+        public void SelectUser(string selectedUser)
+        {
+            if (selectedUser == "") { }
         }
     }
 }

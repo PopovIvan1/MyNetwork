@@ -1,1 +1,31 @@
-﻿
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+<div class="text-center">
+    <h1 class="display-4">@TextModel.Context["admin mode"]</h1>
+</div>
+@{
+    string tableTextColor;
+    if (HttpContextAccessor.HttpContext.Request.Cookies["theme"] == "dark") tableTextColor = "white";
+    else tableTextColor = "dark";
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
+<h2>@TextModel.Context["list of users"]</h2>
+<form asp-controller="MyPage" asp-action="SelectUser" class="form-horizontal">
+    <table class="table" style="color: @tableTextColor">
+        <tr>
+            <th></th>
+            <th>Id</th>
+            <th>@TextModel.Context["name"]</th>
+            <th>@TextModel.Context["email"]</th>
+        </tr>
+        @foreach (var data in ViewData.Model)
+        {
+            <tr>
+                <td><button type="submit" class="btn btn-primary" name="selectedUser" value="@data.UserName"><i class="bi bi-pen"></i> @TextModel.Context["edit"]</button></td>
+                <td>@data.Id</td>
+                <td>@data.UserName</td>
+                <td>@data.Email</td>
+            </tr>
+        }
+    </table>
+</form>
