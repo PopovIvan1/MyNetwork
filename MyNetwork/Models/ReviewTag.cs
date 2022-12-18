@@ -4,6 +4,6 @@
     {
         public int Id { get; set; } = 0!;
         public int ReviewId { get; set; }= 0!;
-        public string TagName { get; set; } = string.Empty!;
+        public int TagId { get; set; } = 0!;
     }
 }

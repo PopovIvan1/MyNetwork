@@ -1,1 +1,98 @@
-﻿
+﻿<div class="text-center">
+    <h1 class="display-4">@TextModel.Context["create bew review"]</h1>
+</div>
+<div class="row justify-content-md-center">
+    <div class="col-md-4">
+        <section>
+            <button class="btn btn-primary" onclick="uploadImage();">@TextModel.Context["upload image"]</button>
+            Place for photo
+            <p></p>
+            <form asp-controller="MyPage" asp-action="AddReviewToDb" class="form-horizontal">
+                <div class="form-floating" style="color:black;">
+                    <input name="reviewName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
+                    <label class="form-label">@TextModel.Context["review name"]</label>
+                </div>
+                <div class="form-floating" style="color:black;">
+                    <input name="creationName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
+                    <label class="form-label">@TextModel.Context["creation name"]</label>
+                </div>
+                <div class="form-floating" id="tags">
+                    @TextModel.Context["add tags"]:
+                    <p></p>
+                    <div class="form-floating" style="color:black;" id="tagContent">
+                        <input name="tags" class="form-control" aria-required="true" onchange="addTagLabel();" id="tag" />
+                        <label class="form-label">@TextModel.Context["add tag"]</label>
+                    </div>
+                </div>
+                <div class="form-floating">
+                    @TextModel.Context["select category"]:
+                    <select name="category" id="selector" style="float: right">
+                        <option>@TextModel.Context["no category"]</option>
+                        <option>@TextModel.Context["films"]</option>
+                        <option>@TextModel.Context["games"]</option>
+                        <option>@TextModel.Context["books"]</option>
+                    </select>
+                </div>
+                <p></p>
+                <div class="form-floating" style="color:black;">
+                    <textarea id="editor" name="description">@TextModel.Context["typing description"]</textarea>
+                </div>
+                <div class="form-floating">
+                    @TextModel.Context["your rate"]:
+                    <input type="number" name="rate" min="0" max="10" style="float: right" value="0" />
+                </div>
+                <p></p>
+                <button type="submit" class="btn btn-primary" style="float: right">@TextModel.Context["new review"]</button>
+            </form>
+        </section>
+    </div>
+</div>
+<!-- suneditor -->
+<link href="~/suneditor/dist/css/suneditor.min.css" rel="stylesheet">
+<!-- suneditor -->
+<script src="~/suneditor/dist/suneditor.min.js"></script>
+<script>
+    var suneditor = SUNEDITOR.create('editor', {
+        display: 'block',
+        width: '100%',
+        height: '30%',
+        popupDisplay: 'full',
+        buttonList: [
+            ['font', 'fontSize', 'formatBlock'],
+            ['paragraphStyle', 'blockquote'],
+            ['bold', 'underline', 'align', 'strike', 'subscript', 'superscript', 'horizontalRule', 'list'],
+            ['table', 'link'],
+            ['align', 'horizontalRule', 'list', 'lineHeight'],
+            ['codeView']
+        ]
+    });
+</script>
+
+<script>
+    function uploadImage() {
+        $.ajax({
+            url: "/MyPage/UploadImage",
+            method: 'GET',
+        });
+        setTimeout(function () {
+            location.reload();
+        }, 700);
+    }
+
+    function addTagLabel() {
+        let isEmptyTags = 0;
+        let tags = document.querySelectorAll("#tagContent");
+        tags.forEach((item, index) => {
+            if (item.querySelector("#tag").value == "") isEmptyTags += 1;
+            if (isEmptyTags > 1) item.remove();
+        });
+        if (isEmptyTags == 0) {
+            let parent = document.getElementById('tags');
+            let elem = parent.querySelector('.form-floating');
+
+            let clone = elem.cloneNode(true);
+            parent.appendChild(clone);
+            document.getElementById('tag').value = "";
+        }
+    }
+</script>

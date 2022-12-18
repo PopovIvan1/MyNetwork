@@ -10,7 +10,9 @@ namespace MyNetwork.Models
         public string Description { get; set; } = string.Empty!;
         public string Category { get; set; } = string.Empty!;
         public int AuthorRate { get; set; } = 0!;
+        public string AuthorId { get; set; } = string.Empty!;
         public string ImageUrl { get; set; } = string.Empty!;
         public float UsersRate { get; set; } = 0!;
+        public DateTime Date { get; set; } = DateTime.Now!;
     }
 }

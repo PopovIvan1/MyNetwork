@@ -36,5 +36,22 @@
   "new review": "Create new review",
   "my reviews": "My reviews",
   "list of users": "List of users",
-  "edit": "Edit"
+  "edit": "Edit",
+  "create bew review": "Creating a new review",
+  "upload image": "Upload image",
+  "review name": "Input review name",
+  "creation name": "Input creation name",
+  "select category": "Select category",
+  "no category": "Without category",
+  "films": "Films",
+  "games": "Games",
+  "books": "Books",
+  "typing description": "Type description",
+  "add tag": "Add tag",
+  "your rate": "Your rate",
+  "add tags": "Add tags",
+  "message error": "Fill in this field",
+  "in admin mode": "You are in administrator mode and acting on behalf of ",
+  "back to admin mode": "Back to admin mode",
+  "back to your page": "Back to your page"
 }
