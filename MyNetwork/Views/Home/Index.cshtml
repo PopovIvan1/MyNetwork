@@ -1,20 +1,147 @@
-﻿@{
+﻿@using System;
+@using System.Web;
+@using System.IO;
+
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
+    string tableTextColor;
+    if (HttpContextAccessor.HttpContext.Request.Cookies["theme"] == "dark") tableTextColor = "white";
+    else tableTextColor = "dark";
     ViewData["Title"] = "Home Page";
 }
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
+
+<script>
+    function addTagLabel() {
+        let isEmptyTags = 0;
+        let tags = document.querySelectorAll("#labelForTags");
+        tags.forEach(item => {
+            if (item.querySelector("#tag").value == "") isEmptyTags += 1;
+            if (isEmptyTags > 1 && item.querySelector("#tag").value == "") item.remove();
+        });
+        if (isEmptyTags == 0) {
+            createNewTag();
+        }
+    }
+
+    function createNewTag() {
+        let parent = document.getElementById('tags');
+        let elem = parent.querySelector('.form-floating');
+
+        let clone = elem.cloneNode(true);
+        parent.appendChild(clone);
+        document.getElementById('tag').value = "";
+    }
+</script>
 
 <div class="text-center">
     <h1 class="display-4">@TextModel.Context["main"]</h1>
 </div>
-<div class="row" style="border-top-style: solid; border-top-color: red">
-    <div class="col-md-4" style="border-right-style: solid; border-right-color: red">
-        <h2 class="display-4">@TextModel.Context["last views"]</h2>
+<div class="row justify-content-md-center" style="border-top-style: solid; border-top-color: red">
+    <div class="col-md-5">
+        <form asp-controller="Home" asp-action="ChangeReviewParametrs" class="form-horizontal">
+            <div class="form-floating">
+                <p></p>
+                @TextModel.Context["select category"]:
+                <select name="category" id="categorySelector" style="float: right" onchange="form.submit();">
+                    <option value="no category">@TextModel.Context["no category"]</option>
+                    <option value="films">@TextModel.Context["films"]</option>
+                    <option value="games">@TextModel.Context["games"]</option>
+                    <option value="books">@TextModel.Context["books"]</option>
+                </select>
+            </div>
+            <script>
+                document.getElementById('categorySelector').value = "@ViewData["category"].ToString()";
+            </script>
+            <p></p>
+            <div class="form-floating">
+                @TextModel.Context["select search"]
+                <select name="searchTupe" id="searchTypeSelector" style="float: right" onchange="form.submit();">
+                    <option value="last views">@TextModel.Context["last views"]</option>
+                    <option value="best views">@TextModel.Context["best views"]</option>
+                    <option value="tags">@TextModel.Context["tags"]</option>
+                </select>
+            </div>
+            <p></p>
+            <script>
+                document.getElementById('searchTypeSelector').value = "@ViewData["searchType"].ToString()";
+            </script>
+            <div class="form-floating" id="tagsLocation">
+                <script>
+                    if (document.getElementById('searchTypeSelector').value != "tags") {
+                        document.getElementById('tagsLocation').remove();
+                    }
+                </script>
+                @TextModel.Context["popular tags"]
+                <p></p>
+                <div class="form-floating" id="tags" style="float: right">
+                    <div class="form-floating" id="labelForTags">
+                        @TextModel.Context["input tag"]
+                        <input name="tags" onchange="addTagLabel();" id="tag" list="dataList" />
+                    </div>
+                </div>
+                @foreach (var popularTag in ViewData["popular tags"].ToString().Split(' '))
+                {
+                    <div><label class="btn-danger" style="width: 180px" onclick="document.getElementById('tag').value = '@popularTag'; createNewTag();"><i class="bi bi-file-plus" style="float: left"></i>@popularTag</label></div>
+                }
+                <p></p>
+                <button type="submit" class="btn btn-primary">@TextModel.Context["search"]</button>
+                <datalist id="dataList">
+                    @foreach (var tagFromDb in ViewData.Model.Tags)
+                    {
+                        <option>@tagFromDb.Name</option>
+                    }
+                </datalist>
+            </div>
+            <script>
+                let tagValues = "@ViewData["tags"].ToString()".split(' ');
+                tagValues.forEach(item => {
+                    document.getElementById('tag').value = decodeURI(item);
+                    if (item != "") {
+                        createNewTag();
+                    }
+                })
+            </script>
+        </form>
     </div>
-    <div class="col-md-4" style="border-right-style: solid; border-right-color: red">
-        <h2 class="display-4">@TextModel.Context["best views"]</h2>
-    </div>
-    <div class="col-md-4">
-        <h2 class="display-4">@TextModel.Context["tags"]</h2>
-        <label class="form-label">@TextModel.Context["input tag"]</label>
-        <input aria-required="true" />
-    </div>
+    <h3>@TextModel.Context["search results"]</h3>
+    <p></p>
+    <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">
+        <table class="table" style="border-style: solid; border-color: red; color: @tableTextColor; ">
+            @foreach (var data in ViewData.Model.SelectReviewsWithSettings())
+            {
+                <tr>
+                    <td><button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
+                    <td id="@data.Id" align="left" style="width: 80%">
+                        @{
+                            <p>@TextModel.Context["reviewname"]@data.Name</p>
+                            <p>@TextModel.Context["creation review name"]@data.CreationName</p>
+                            string userName = await ViewData.Model.GetUserName(data.AuthorId.ToString());
+                            <p>@TextModel.Context["author"]@userName</p>
+                            <p>@TextModel.Context["category"]@TextModel.Context[data.Category]</p>
+                            <p>
+                                @TextModel.Context["tag"] @foreach (var tag in ViewData.Model.SelectReviewTags(data.Id))
+                                {
+                                    <label>@tag </label>
+                                }
+                            </p>
+                            <p>@TextModel.Context["author rate"]@data.AuthorRate</p>
+                            <p>@TextModel.Context["users rate"]@data.UsersRate</p>
+                            <p>@TextModel.Context["date"]@data.Date.ToShortDateString()</p>
+                            <p>@TextModel.Context["description"]</p>
+                        }
+                    </td>
+                </tr>
+                <script>
+                    var str = "@HttpUtility.UrlEncode(data.Description.Replace(" ", "\u00A0"))";
+                    str = decodeURI(str);
+                    str = str.replaceAll("%2f", "/");
+                    str = str.replaceAll("%26nbsp%3b", " ");
+                    document.getElementById('@data.Id').insertAdjacentHTML("beforeend", str);
+                </script>
+            }
+        </table>
+    </form>
 </div>

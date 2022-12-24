@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using MyNetwork.Data;
 using MyNetwork.Models;
+using System.Web;
 
 namespace MyNetwork.Controllers
 {
@@ -19,6 +20,7 @@ namespace MyNetwork.Controllers
             await checkUserAsync();
             ViewData.Model = db;
             ViewData.Add("admin mode", CurrentUserSettings.adminMode);
+            ViewData.Add("username", CurrentUserSettings.currentUser);
             return View();
         }
 
@@ -30,17 +32,18 @@ namespace MyNetwork.Controllers
 
         public IActionResult NewReview()
         {
+            ViewData.Model = db.Tags;
             return View();
         }
 
         public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate)
         {
-            if (description == TextModel.Context["typing description"]) description = "";
-            string userId = (await db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == User.Identity.Name)).Id;
+            if (description.Contains(TextModel.Context["typing description"])) description = "";
+            string userId = (await db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == CurrentUserSettings.currentUser)).Id;
             Review review = new Review() { Name = reviewName, CreationName = creationName, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), AuthorId = userId };
             db.Reviews.Add(review);
             db.SaveChanges();
-            await setTagsToDb(tags, (await db.Reviews.FirstOrDefaultAsync(reviewFromDb => reviewFromDb.Date == review.Date && reviewFromDb.AuthorId == review.AuthorId)).Id);
+            await db.SetTagsToDb(tags, (await db.Reviews.FirstOrDefaultAsync(reviewFromDb => reviewFromDb.Date == review.Date && reviewFromDb.AuthorId == review.AuthorId)).Id);
             return RedirectToAction("Index", "MyPage");
         }
 
@@ -78,19 +81,6 @@ namespace MyNetwork.Controllers
             {
                 CurrentUserSettings.adminMode = TextModel.Context["in admin mode"] + CurrentUserSettings.currentUser;
             }
-        }
-
-        private async Task setTagsToDb(string[] tags, int reviewId)
-        { 
-            foreach (var tag in tags.Skip(1).Distinct()) 
-            {
-                Tag tagFromDb = await db.Tags.FirstOrDefaultAsync(tagFromDb => tagFromDb.Name == tag);
-                if (tagFromDb != null) tagFromDb.ReviewsCount++;
-                else db.Tags.Add(new Tag() { Name = tag, ReviewsCount = 0 });
-                db.SaveChanges();
-                db.ReviewTags.Add(new ReviewTag() { ReviewId = reviewId, TagId = (await db.Tags.FirstOrDefaultAsync(tagFromDb => tagFromDb.Name == tag)).Id });
-            }
-            db.SaveChanges();
         }
 
         private void setAdminSettings()

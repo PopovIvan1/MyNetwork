@@ -1,82 +1,8 @@
-﻿<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
-<form asp-controller="MyPage" asp-action="BackToMyPage" class="form-horizontal">
-    <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-square"></i> @TextModel.Context["back to your page"]</button>
-</form>
-<div class="text-center">
-    <h1 class="display-4">@TextModel.Context["create bew review"]</h1>
-</div>
-<div class="row justify-content-md-center">
-    <div class="col-md-4">
-        <section>
-            <button class="btn btn-primary" onclick="uploadImage();">@TextModel.Context["upload image"]</button>
-            Place for photo
-            <p></p>
-            <form asp-controller="MyPage" asp-action="AddReviewToDb" class="form-horizontal">
-                <div class="form-floating" style="color:black;">
-                    <input name="reviewName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
-                    <label class="form-label">@TextModel.Context["review name"]</label>
-                </div>
-                <div class="form-floating" style="color:black;">
-                    <input name="creationName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
-                    <label class="form-label">@TextModel.Context["creation name"]</label>
-                </div>
-                <div class="form-floating" id="tags">
-                    @TextModel.Context["add tags"]:
-                    <p></p>
-                    <div class="form-floating" style="color:black;" id="tagContent">
-                        <input name="tags" class="form-control" aria-required="true" onchange="addTagLabel();" id="tag" list="dataList" />
-                        <label class="form-label">@TextModel.Context["add tag"]</label>
-                    </div>
-                </div>
-                <div class="form-floating">
-                    @TextModel.Context["select category"]:
-                    <select name="category" id="selector" style="float: right">
-                        <option value="no category">@TextModel.Context["no category"]</option>
-                        <option value="films">@TextModel.Context["films"]</option>
-                        <option value="games">@TextModel.Context["games"]</option>
-                        <option value="books">@TextModel.Context["books"]</option>
-                    </select>
-                </div>
-                <p></p>
-                <div class="form-floating" style="color:black;">
-                    <textarea id="editor" name="description">@TextModel.Context["typing description"]</textarea>
-                </div>
-                <div class="form-floating">
-                    @TextModel.Context["your rate"]:
-                    <input type="number" name="rate" min="0" onchange="checkNumber();" style="float: right" value="0" id="number" />
-                </div>
-                <p></p>
-                <button type="submit" class="btn btn-primary" style="float: right" onclick="suneditor.save();">@TextModel.Context["new review"]</button>
-                <datalist id="dataList">
-                    @foreach (var tagFromDb in ViewData.Model)
-                    {
-                        <option>@tagFromDb.Name</option>
-                    }
-                </datalist>
-            </form>
-        </section>
-    </div>
-</div>
-<!-- suneditor -->
-<link href="~/suneditor/dist/css/suneditor.min.css" rel="stylesheet">
-<!-- suneditor -->
-<script src="~/suneditor/dist/suneditor.min.js"></script>
-<script>
-    var suneditor = SUNEDITOR.create('editor', {
-        display: 'block',
-        width: '100%',
-        height: '30%',
-        popupDisplay: 'full',
-        buttonList: [
-            ['font', 'fontSize', 'formatBlock'],
-            ['paragraphStyle', 'blockquote'],
-            ['bold', 'underline', 'align', 'strike', 'subscript', 'superscript', 'horizontalRule', 'list'],
-            ['table', 'link'],
-            ['align', 'horizontalRule', 'list', 'lineHeight'],
-            ['codeView']
-        ]
-    });
-</script>
+﻿@model ApplicationContext
+
+@{
+    Review data = Model.Reviews.FirstOrDefault(review => review.Id == (int)ViewData["reviewId"]);
+}
 
 <script>
     function uploadImage() {
@@ -108,4 +34,94 @@
             document.getElementById('number').value = 10;
         }
     }
+</script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
+<form asp-controller="MyPage" asp-action="BackToMyPage" class="form-horizontal">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-square"></i> @TextModel.Context["back to your page"]</button>
+</form>
+<div class="text-center">
+    <h1 class="display-4"><i class="bi bi-pen"></i> @TextModel.Context["edit"]</h1>
+</div>
+<div class="row justify-content-md-center">
+    <div class="col-md-4">
+        <section>
+            <button class="btn btn-primary" onclick="uploadImage();">@TextModel.Context["upload image"]</button>
+            Place for photo
+            <p></p>
+            <form asp-controller="Review" asp-action="UpdateReview" class="form-horizontal">
+                <div class="form-floating" style="color:black;">
+                    <input name="reviewName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" value="@data.Name" />
+                    <label class="form-label">@TextModel.Context["review name"]</label>
+                </div>
+                <div class="form-floating" style="color:black;">
+                    <input name="creationName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" value="@data.CreationName"/>
+                    <label class="form-label">@TextModel.Context["creation name"]</label>
+                </div>
+                <div class="form-floating" id="tags">
+                    @TextModel.Context["add tags"]:
+                    <p></p>
+                    <div class="form-floating" style="color:black;" id="tagContent">
+                        <input name="tags" class="form-control" aria-required="true" onchange="addTagLabel();" id="tag" list="dataList" />
+                        <label class="form-label">@TextModel.Context["add tag"]</label>
+                    </div>
+                    @foreach (var tag in ViewData.Model.SelectReviewTags(data.Id))
+                    {
+                        <script>
+                            document.getElementById('tag').value = "@tag";
+                            addTagLabel();
+                        </script>
+                    }
+                </div>
+                <div class="form-floating">
+                    @TextModel.Context["select category"]:
+                    <select name="category" id="selector" style="float: right">
+                        <option value="no category">@TextModel.Context["no category"]</option>
+                        <option value="films">@TextModel.Context["films"]</option>
+                        <option value="games">@TextModel.Context["games"]</option>
+                        <option value="books">@TextModel.Context["books"]</option>
+                    </select>
+                </div>
+                <script>
+                    document.getElementById('selector').value = "@data.Category";
+                </script>
+                <p></p>
+                <div class="form-floating" style="color:black;">
+                    <textarea id="editor" name="description">@data.Description</textarea>
+                </div>
+                <div class="form-floating">
+                    @TextModel.Context["your rate"]:
+                    <input type="number" name="rate" min="0" onchange="checkNumber();" style="float: right" value="@data.AuthorRate" id="number" />
+                </div>
+                <p></p>
+                <button type="submit" class="btn btn-primary" style="float: right" onclick="suneditor.save();">@TextModel.Context["save changes"]</button>
+                <datalist id="dataList">
+                    @foreach (var tagFromDb in ViewData.Model.Tags)
+                    {
+                        <option>@tagFromDb.Name</option>
+                    }
+                </datalist>
+            </form>
+        </section>
+    </div>
+</div>
+<!-- suneditor -->
+<link href="~/suneditor/dist/css/suneditor.min.css" rel="stylesheet">
+<!-- suneditor -->
+<script src="~/suneditor/dist/suneditor.min.js"></script>
+<script>
+    var suneditor = SUNEDITOR.create('editor', {
+        display: 'block',
+        width: '100%',
+        height: '30%',
+        popupDisplay: 'full',
+        buttonList: [
+            ['font', 'fontSize', 'formatBlock'],
+            ['paragraphStyle', 'blockquote'],
+            ['bold', 'underline', 'align', 'strike', 'subscript', 'superscript', 'horizontalRule', 'list'],
+            ['table', 'link'],
+            ['align', 'horizontalRule', 'list', 'lineHeight'],
+            ['codeView']
+        ]
+    });
 </script>

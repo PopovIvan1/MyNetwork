@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Web;
 
 namespace MyNetwork.Models
 {
@@ -18,6 +20,79 @@ namespace MyNetwork.Models
         {
             return (await AspNetUsers.FirstOrDefaultAsync(user => user.UserName == username))
                 .IsAdmin == "No        " ? false : true;
+        }
+
+        public List<string> SelectPopularTags()
+        {
+            return Tags.OrderByDescending(tag => tag.ReviewsCount).Take(Tags.Count() > 5 ? 5 : Tags.Count())
+                .Select(tag => tag.Name).ToList();
+        }
+
+        public async Task<List<Review>> SelectUserReviews(string username)
+        {
+            string userId = (await AspNetUsers.FirstOrDefaultAsync(user => user.UserName == username)).Id;
+            return Reviews.Where(review => review.AuthorId == userId).ToList();
+        }
+
+        public async Task<string> GetUserName(string userId)
+        {
+            return (await AspNetUsers.FirstOrDefaultAsync(user => user.Id == userId)).UserName;
+        }
+
+        public List<string> SelectReviewTags(int reviewId)
+        {
+            return Tags.Where(tag => 
+            ReviewTags.Where(reviewTag => reviewTag.ReviewId == reviewId).Select(reviewTag => reviewTag.TagId)
+            .Contains(tag.Id)).Select(tag => tag.Name).ToList();
+        }
+
+        public List<Review> SelectReviewsWithSettings()
+        {
+            var reviewsWithCurrentCategory = Reviews.Where(review => review.Category == ReviewSettings.Category);
+            var resultReviews = ReviewSettings.SearchType == "best views" ?
+                new List<Review>() :
+                ReviewSettings.SearchType == "last views" ?
+                reviewsWithCurrentCategory.OrderByDescending(review => review.Date).ToList() :
+                ReviewSettings.Tags.Count == 0 ? reviewsWithCurrentCategory.ToList() :
+                getReviewsByTags(reviewsWithCurrentCategory.ToList());
+            return resultReviews.Take(resultReviews.Count > 10 ? 10 : resultReviews.Count).ToList();
+        }
+
+        public async Task SetTagsToDb(string[] tags, int reviewId)
+        {
+            foreach (var tag in tags.Skip(1).Distinct())
+            {
+                Tag tagFromDb = await Tags.FirstOrDefaultAsync(tagFromDb => tagFromDb.Name == tag);
+                if (tagFromDb != null) tagFromDb.ReviewsCount++;
+                else Tags.Add(new Tag() { Name = tag, ReviewsCount = 0 });
+                SaveChanges();
+                ReviewTags.Add(new ReviewTag() { ReviewId = reviewId, TagId = (await Tags.FirstOrDefaultAsync(tagFromDb => tagFromDb.Name == tag)).Id });
+            }
+            SaveChanges();
+        }
+
+        public async Task RemoveTags(int reviewId)
+        {
+            var currentReviewTags = ReviewTags.Where(tag => tag.ReviewId == reviewId).ToList();
+            foreach (var reviewTag in currentReviewTags)
+            {
+                Tag tag = await Tags.FirstOrDefaultAsync(tag => tag.Id == reviewTag.TagId);
+                ReviewTags.Remove(reviewTag);
+                if (tag.ReviewsCount == 0) Tags.Remove(tag);
+                else tag.ReviewsCount--;
+                SaveChanges();
+            }
+        }
+
+        private List<Review> getReviewsByTags(List<Review> reviewsWithCurrentCategory)
+        {
+            List<Review> resultReviews = new List<Review>();
+            foreach (var review in reviewsWithCurrentCategory)
+            {
+                var reviewTags = SelectReviewTags(review.Id);
+                if (reviewTags.Count != 0 && ReviewSettings.Tags.All(tag => reviewTags.Contains(HttpUtility.UrlDecode(tag)))) resultReviews.Add(review);
+            }
+            return resultReviews;
         }
     }
 }

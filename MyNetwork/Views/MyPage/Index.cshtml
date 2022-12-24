@@ -1,4 +1,13 @@
-﻿@{
+﻿@using System;
+@using System.Web;
+@using System.IO;
+
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
+    string tableTextColor;
+    if (HttpContextAccessor.HttpContext.Request.Cookies["theme"] == "dark") tableTextColor = "white";
+    else tableTextColor = "dark";
     ViewData["Title"] = "My Page";
     if (ViewData["admin mode"].ToString() != "available" && ViewData["admin mode"].ToString() != "not available")
     {
@@ -35,3 +44,49 @@
     }
 </div>
 <h3 style="margin-top: 4%">@TextModel.Context["my reviews"]</h3>
+<table class="table" style="border-style: solid; border-color: red; color: @tableTextColor">
+    @foreach (var data in await ViewData.Model.SelectUserReviews(ViewData["username"].ToString()))
+    {
+        <tr>
+            <td>
+                <form asp-controller="Review" asp-action="EditReview" class="form-horizontal">
+                    <button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-pen"></i> @TextModel.Context["edit"]</button>
+                </form>
+                <p></p>
+                <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">
+                    <p><button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></p>
+                </form>
+                <p></p>
+                <form asp-controller="Review" asp-action="RemoveReview" class="form-horizontal">
+                    <p><button type="submit" class="btn btn-danger" name="review" value="@data.Id"><i class="bi bi-trash"></i> @TextModel.Context["remove"]</button></p>
+                </form>
+            </td>
+            <td id="@data.Id" align="left" style="width: 80%">
+                @{
+                    <p>@TextModel.Context["reviewname"]@data.Name</p>
+                    <p>@TextModel.Context["creation review name"]@data.CreationName</p>
+                    string userName = await ViewData.Model.GetUserName(data.AuthorId.ToString());
+                    <p>@TextModel.Context["author"]@userName</p>
+                    <p>@TextModel.Context["category"]@TextModel.Context[data.Category]</p>
+                    <p>
+                        @TextModel.Context["tag"] @foreach (var tag in ViewData.Model.SelectReviewTags(data.Id))
+                        {
+                            <label>@tag </label>
+                        }
+                    </p>
+                    <p>@TextModel.Context["author rate"]@data.AuthorRate</p>
+                    <p>@TextModel.Context["users rate"]@data.UsersRate</p>
+                    <p>@TextModel.Context["date"]@data.Date.ToShortDateString()</p>
+                    <p>@TextModel.Context["description"]</p>
+                }
+            </td>
+        </tr>
+        <script>
+            var str = "@HttpUtility.UrlEncode(data.Description.Replace(" ", "\u00A0"))";
+            str = decodeURI(str);
+            str = str.replaceAll("%2f", "/");
+            str = str.replaceAll("%26nbsp%3b", " ");
+            document.getElementById('@data.Id').insertAdjacentHTML("beforeend", str);
+        </script>
+    }
+</table>

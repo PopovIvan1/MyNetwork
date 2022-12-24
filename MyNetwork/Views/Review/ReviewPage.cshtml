@@ -1,0 +1,25 @@
+﻿@model ApplicationContext
+
+<div class="row justify-content-md-center">
+    <div class="col-md-5">
+
+        @{
+            Review data = Model.Reviews.FirstOrDefault(review => review.Id == (int)ViewData["reviewId"]);
+            <p>@TextModel.Context["reviewname"]@data.Name</p>
+            <p>@TextModel.Context["creation review name"]@data.CreationName</p>
+            string userName = await Model.GetUserName(data.AuthorId.ToString());
+            <p>@TextModel.Context["author"]@userName</p>
+            <p>@TextModel.Context["category"]@TextModel.Context[data.Category]</p>
+            <p>
+                @TextModel.Context["tag"] @foreach (var tag in Model.SelectReviewTags(data.Id))
+                {
+                    <label>@tag </label>
+                }
+            </p>
+            <p>@TextModel.Context["author rate"]@data.AuthorRate</p>
+            <p>@TextModel.Context["users rate"]@data.UsersRate</p>
+            <p>@TextModel.Context["date"]@data.Date.ToShortDateString()</p>
+            <p>@TextModel.Context["description"]</p>
+        }
+    </div>
+</div>

@@ -53,5 +53,21 @@
   "message error": "Fill in this field",
   "in admin mode": "You are in administrator mode and acting on behalf of ",
   "back to admin mode": "Back to admin mode",
-  "back to your page": "Back to your page"
+  "back to your page": "Back to your page",
+  "select search": "Select search type: ",
+  "search": "Search",
+  "popular tags": "Popular tags: ",
+  "search results": "Search results:",
+  "author": "Author: ",
+  "description": "Description: ",
+  "author rate": "Author rate: ",
+  "users rate": "Users rate: ",
+  "date": "Date: ",
+  "tag": "Tags: ",
+  "creation review name": "Creation name: ",
+  "reviewname": "Review name: ",
+  "category": "Category: ",
+  "watch": "Watch",
+  "remove": "Remove",
+  "save changes": "Save changes"
 }
