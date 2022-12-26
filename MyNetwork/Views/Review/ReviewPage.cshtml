@@ -1,14 +1,84 @@
-﻿@model ApplicationContext
+﻿@using System;
+@using System.Web;
+@using System.IO;
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+@model ApplicationContext
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
+
+<script>
+    let color;
+</script>
 
 <div class="row justify-content-md-center">
     <div class="col-md-5">
 
         @{
+            string tableTextColor;
+            if (HttpContextAccessor.HttpContext.Request.Cookies["theme"] == "dark") tableTextColor = "white";
+            else tableTextColor = "dark";
             Review data = Model.Reviews.FirstOrDefault(review => review.Id == (int)ViewData["reviewId"]);
+            if (SignInManager.IsSignedIn(User))
+            {
+                if (Model.Likes.FirstOrDefault(like => like.UserId == ViewData["userId"] && like.ReviewId == data.Id) != null)
+                {
+                    <script>
+                        color = "blue";
+                    </script>
+                }
+                else
+                {
+                    <script>
+                        color = "";
+                    </script>
+                }
+                <div style="float: right">
+                    <p>
+                        <i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label>
+                    </p>
+                    <script>
+                        document.getElementById('heart').style.color = color;
+                    </script>
+                </div>
+                <script>
+                    function like() {
+                        let curVal = Number(document.getElementById('likesCount').innerHTML);
+                        let isLike = 0;
+                        if (document.getElementById('heart').style.color == "blue") {
+                            document.getElementById('heart').style.color = "";
+                            curVal--;
+                            document.getElementById('likesCount').innerHTML = curVal
+                        }
+                        else {
+                            document.getElementById('heart').style.color = "blue"
+                            curVal++;
+                            document.getElementById('likesCount').innerHTML = curVal;
+                            isLike = 1;
+                        }
+                        $.ajax({
+                            url: "/Review/LikeReview",
+                            method: 'GET',
+                            data: {
+                                likeCount: curVal,
+                                likeOrDislike: isLike
+                            }
+                        });
+                    }
+                </script>
+            }
+            else
+            {
+                <div style="float: right">
+                    @TextModel.Context["likes"]@data.Likes
+                </div>
+            }
             <p>@TextModel.Context["reviewname"]@data.Name</p>
             <p>@TextModel.Context["creation review name"]@data.CreationName</p>
-            string userName = await Model.GetUserName(data.AuthorId.ToString());
-            <p>@TextModel.Context["author"]@userName</p>
+            User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
+            <p>@TextModel.Context["author"]@user.UserName (<i style="color: green">@user.Likes</i>)</p>
             <p>@TextModel.Context["category"]@TextModel.Context[data.Category]</p>
             <p>
                 @TextModel.Context["tag"] @foreach (var tag in Model.SelectReviewTags(data.Id))
@@ -20,6 +90,44 @@
             <p>@TextModel.Context["users rate"]@data.UsersRate</p>
             <p>@TextModel.Context["date"]@data.Date.ToShortDateString()</p>
             <p>@TextModel.Context["description"]</p>
+            <p id="description"></p>
+            <script>
+                var str = "@HttpUtility.UrlEncode(data.Description.Replace(" ", "\u00A0"))";
+                str = decodeURI(str);
+                str = str.replaceAll("%2f", "/");
+                str = str.replaceAll("%26nbsp%3b", " ");
+                document.getElementById('description').insertAdjacentHTML("beforeend", str);
+            </script>
+            <h4>@TextModel.Context["comments"]</h4>
+            <table class="table" style="color: @tableTextColor" id="Comments">
+                @foreach (var comment in Model.SelectReviewComments(data.Id))
+                {
+                    <tr>
+                        <td style="width: 40%">
+                            @comment.UserName  (<i style="color: green">@comment.UserLikes</i>):
+                            <p style="color: grey">@comment.Date.ToShortDateString()</p>
+                        </td>
+                        <td align="left" style="width: 60%">
+                            @comment.Context
+                        </td>
+                    </tr>
+                }
+            </table>
+            @if (SignInManager.IsSignedIn(User))
+            {
+                <table class="table" style="color: @tableTextColor">
+                    <tr>
+                        <td>
+                            <form asp-controller="Review" asp-action="NewComment" class="form-horizontal">
+                                <div class="form-floating" style="color:black;">
+                                    <input class="form-control" onchange="form.submit();" name="commentContext" />
+                                    <label class="form-label">@TextModel.Context["your comment"]</label>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                </table>
+            }
         }
     </div>
 </div>

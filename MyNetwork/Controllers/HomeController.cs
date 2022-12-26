@@ -16,6 +16,7 @@ namespace MyNetwork.Controllers
             _logger = logger;
             this.db = db;
             TextModel.setContext("en");
+            ReviewSettings.CurrentUser = "";
         }
 
         public IActionResult Index()
@@ -71,7 +72,7 @@ namespace MyNetwork.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        public IActionResult ChangeReviewParametrs(string category, string searchTupe, string[]? tags = null)
+        public IActionResult ChangeReviewParameters(string category, string searchTupe, string[]? tags = null)
         {
             ReviewSettings.Category = category;
             ReviewSettings.SearchType = searchTupe;

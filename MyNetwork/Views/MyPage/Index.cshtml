@@ -24,6 +24,10 @@
 }
 
 <div class="text-center">
+    @{
+        int userLikes = (await ViewData.Model.FindUserByNameAsync(ViewData["username"].ToString())).Likes;
+    }
+    <div style="float: right">@TextModel.Context["your likes"] @userLikes</div>
     <h1 class="display-4">@TextModel.Context["my page"]</h1>
 </div>
 <div class="row">
@@ -44,8 +48,32 @@
     }
 </div>
 <h3 style="margin-top: 4%">@TextModel.Context["my reviews"]</h3>
+<form asp-controller="MyPage" asp-action="ChangeParameters" class="form-horizontal">
+    <div class="form-floating">
+        <p></p>
+        @TextModel.Context["filter"]
+        <select name="categoryFromView" id="categorySelector" onchange="form.submit();">
+            <option value="all">@TextModel.Context["all"]</option>
+            <option value="no category">@TextModel.Context["no category"]</option>
+            <option value="films">@TextModel.Context["films"]</option>
+            <option value="games">@TextModel.Context["games"]</option>
+            <option value="books">@TextModel.Context["books"]</option>
+        </select>
+        @TextModel.Context["sort order"]
+        <select name="sortOrderFromView" id="sortOrderSelector" onchange="form.submit();">
+            <option value="no sort">@TextModel.Context["no sort"]</option>
+            <option value="date">@TextModel.Context["sort by date"]</option>
+            <option value="popular">@TextModel.Context["sort by popularity"]</option>
+        </select>
+    </div>
+    <p></p>
+    <script>
+        document.getElementById('categorySelector').value = "@ViewData["category"].ToString()";
+        document.getElementById('sortOrderSelector').value = "@ViewData["sortOrder"].ToString()";
+    </script>
+</form>
 <table class="table" style="border-style: solid; border-color: red; color: @tableTextColor">
-    @foreach (var data in await ViewData.Model.SelectUserReviews(ViewData["username"].ToString()))
+    @foreach (var data in await ViewData.Model.SelectUserReviews(ViewData["username"].ToString(), ViewData["category"].ToString(), ViewData["sortOrder"].ToString()))
     {
         <tr>
             <td>
@@ -63,10 +91,11 @@
             </td>
             <td id="@data.Id" align="left" style="width: 80%">
                 @{
+                    <p style="float: right">@TextModel.Context["likes"]@data.Likes</p>
                     <p>@TextModel.Context["reviewname"]@data.Name</p>
                     <p>@TextModel.Context["creation review name"]@data.CreationName</p>
-                    string userName = await ViewData.Model.GetUserName(data.AuthorId.ToString());
-                    <p>@TextModel.Context["author"]@userName</p>
+                    User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
+                    <p>@TextModel.Context["author"]@user.UserName (<i style="color: green">@user.Likes</i>)</p>
                     <p>@TextModel.Context["category"]@TextModel.Context[data.Category]</p>
                     <p>
                         @TextModel.Context["tag"] @foreach (var tag in ViewData.Model.SelectReviewTags(data.Id))

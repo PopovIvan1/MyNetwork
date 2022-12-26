@@ -15,11 +15,11 @@ namespace MyNetwork.Models
         public DbSet<Rate> Rates { get; set; } = null!;
         public DbSet<Tag> Tags { get; set; } = null!;
         public DbSet<ReviewTag> ReviewTags { get; set; } = null!;
+        public DbSet<Like> Likes { get; set; } = null!;
 
-        public async Task<bool> IsAdminAsync(string username)
+        public async Task<User> FindUserByNameAsync(string username)
         {
-            return (await AspNetUsers.FirstOrDefaultAsync(user => user.UserName == username))
-                .IsAdmin == "No        " ? false : true;
+            return await AspNetUsers.FirstOrDefaultAsync(user => user.UserName == username);
         }
 
         public List<string> SelectPopularTags()
@@ -28,15 +28,18 @@ namespace MyNetwork.Models
                 .Select(tag => tag.Name).ToList();
         }
 
-        public async Task<List<Review>> SelectUserReviews(string username)
+        public async Task<List<Review>> SelectUserReviews(string username, string category, string sortOrder)
         {
-            string userId = (await AspNetUsers.FirstOrDefaultAsync(user => user.UserName == username)).Id;
-            return Reviews.Where(review => review.AuthorId == userId).ToList();
+            string userId = (await FindUserByNameAsync(username)).Id;
+            var userReviews = category == "all" ? Reviews.Where(review => review.AuthorId == userId).ToList()
+                : Reviews.Where(review => review.AuthorId == userId && review.Category == category).ToList();
+            return sortOrder == "date" ? userReviews.OrderByDescending(review => review.Date).ToList()
+                : sortOrder == "popular" ? userReviews.OrderByDescending(review => review.Likes).ToList() : userReviews;
         }
 
-        public async Task<string> GetUserName(string userId)
+        public async Task<User> GetUserByIdAsync(string userId)
         {
-            return (await AspNetUsers.FirstOrDefaultAsync(user => user.Id == userId)).UserName;
+            return await AspNetUsers.FirstOrDefaultAsync(user => user.Id == userId);
         }
 
         public List<string> SelectReviewTags(int reviewId)
@@ -46,11 +49,16 @@ namespace MyNetwork.Models
             .Contains(tag.Id)).Select(tag => tag.Name).ToList();
         }
 
+        public List<Comment> SelectReviewComments(int reviewId)
+        {
+            return Comments.Where(comment => comment.ReviewId == reviewId).OrderBy(comment => comment.Date).ToList();
+        }
+
         public List<Review> SelectReviewsWithSettings()
         {
-            var reviewsWithCurrentCategory = Reviews.Where(review => review.Category == ReviewSettings.Category);
+            var reviewsWithCurrentCategory = ReviewSettings.Category == "all" ? Reviews : Reviews.Where(review => review.Category == ReviewSettings.Category);
             var resultReviews = ReviewSettings.SearchType == "best views" ?
-                new List<Review>() :
+                reviewsWithCurrentCategory.OrderByDescending(review => review.Likes).ToList() :
                 ReviewSettings.SearchType == "last views" ?
                 reviewsWithCurrentCategory.OrderByDescending(review => review.Date).ToList() :
                 ReviewSettings.Tags.Count == 0 ? reviewsWithCurrentCategory.ToList() :

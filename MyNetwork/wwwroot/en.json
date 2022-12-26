@@ -69,5 +69,15 @@
   "category": "Category: ",
   "watch": "Watch",
   "remove": "Remove",
-  "save changes": "Save changes"
+  "save changes": "Save changes",
+  "comments": "Comments:",
+  "your comment": "Your comment:",
+  "all": "All",
+  "filter": "Filter: ",
+  "sort order": "   Sort order: ",
+  "no sort": "Without sort order",
+  "sort by date": "Sort by date",
+  "sort by popularity": "Sort by popularity",
+  "your likes": "Your likes: ",
+  "likes": "Likes: "
 }

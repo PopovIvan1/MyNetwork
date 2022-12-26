@@ -41,11 +41,12 @@
 </div>
 <div class="row justify-content-md-center" style="border-top-style: solid; border-top-color: red">
     <div class="col-md-5">
-        <form asp-controller="Home" asp-action="ChangeReviewParametrs" class="form-horizontal">
+        <form asp-controller="Home" asp-action="ChangeReviewParameters" class="form-horizontal">
             <div class="form-floating">
                 <p></p>
                 @TextModel.Context["select category"]:
                 <select name="category" id="categorySelector" style="float: right" onchange="form.submit();">
+                    <option value="all">@TextModel.Context["all"]</option>
                     <option value="no category">@TextModel.Context["no category"]</option>
                     <option value="films">@TextModel.Context["films"]</option>
                     <option value="games">@TextModel.Context["games"]</option>
@@ -116,10 +117,11 @@
                     <td><button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
                     <td id="@data.Id" align="left" style="width: 80%">
                         @{
+                            <p style="float: right">@TextModel.Context["likes"]@data.Likes</p>
                             <p>@TextModel.Context["reviewname"]@data.Name</p>
                             <p>@TextModel.Context["creation review name"]@data.CreationName</p>
-                            string userName = await ViewData.Model.GetUserName(data.AuthorId.ToString());
-                            <p>@TextModel.Context["author"]@userName</p>
+                            User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
+                            <p>@TextModel.Context["author"]@user.UserName (<i style="color: green">@user.Likes</i>)</p>
                             <p>@TextModel.Context["category"]@TextModel.Context[data.Category]</p>
                             <p>
                                 @TextModel.Context["tag"] @foreach (var tag in ViewData.Model.SelectReviewTags(data.Id))

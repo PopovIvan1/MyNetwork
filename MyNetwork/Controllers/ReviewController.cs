@@ -14,10 +14,14 @@ namespace MyNetwork.Controllers
             this.db = db;
         }
 
-        public IActionResult ReviewPage(string review)
+        public async Task<IActionResult> ReviewPage(string review)
         {
             currentReviewId = int.Parse(review);
             ViewData.Add("reviewId", currentReviewId);
+            if (User.Identity.IsAuthenticated) 
+            { 
+                ViewData.Add("userId", (await db.FindUserByNameAsync(User.Identity.Name)).Id); 
+            }
             ViewData.Model = db;
             return View();
         }
@@ -32,7 +36,9 @@ namespace MyNetwork.Controllers
 
         public async Task<IActionResult> RemoveReview(string review)
         {
-            db.Reviews.Remove(await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId));
+            Review currentReview = await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId);
+            (await db.GetUserByIdAsync(currentReview.AuthorId)).Likes -= currentReview.Likes;
+            db.Reviews.Remove(currentReview);
             db.SaveChanges();
             return RedirectToAction("Index", "MyPage");
         }
@@ -50,6 +56,30 @@ namespace MyNetwork.Controllers
             db.SaveChanges();
             await db.SetTagsToDb(tags, currentReviewId);
             return RedirectToAction("Index", "MyPage");
+        }
+
+        public async Task<IActionResult> NewComment(string commentContext)
+        {
+            User user = await db.FindUserByNameAsync(ReviewSettings.CurrentUser);
+            db.Comments.Add(new Comment { ReviewId = currentReviewId, Context = commentContext, Date = DateTime.Now, UserId = user.Id, UserName = ReviewSettings.CurrentUser, UserLikes = user.Likes });
+            db.SaveChanges();
+            return RedirectToAction("ReviewPage", "Review", new { review = currentReviewId.ToString() });
+        }
+
+        public async Task LikeReview(int likeCount, int likeOrDislike)
+        {
+            string userId = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser == "" ? User.Identity.Name: ReviewSettings.CurrentUser)).Id;
+            if (likeOrDislike == 1)
+            {
+                db.Likes.Add(new Like { ReviewId = currentReviewId, UserId = userId });
+                (await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId)).Likes++;
+            }
+            else
+            {
+                db.Likes.Remove(await db.Likes.FirstOrDefaultAsync(like => like.UserId == userId && like.ReviewId == currentReviewId));
+                (await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId)).Likes--;
+            }
+            db.SaveChanges();
         }
     }
 }

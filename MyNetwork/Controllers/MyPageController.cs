@@ -9,6 +9,9 @@ namespace MyNetwork.Controllers
     public class MyPageController : Controller
     {
         private ApplicationContext db;
+        private static string adminMode = "not available";
+        private static string category = "all";
+        private static string sortOrder = "no sort";
 
         public MyPageController(ApplicationContext db)
         {
@@ -19,8 +22,10 @@ namespace MyNetwork.Controllers
         {
             await checkUserAsync();
             ViewData.Model = db;
-            ViewData.Add("admin mode", CurrentUserSettings.adminMode);
-            ViewData.Add("username", CurrentUserSettings.currentUser);
+            ViewData.Add("admin mode", adminMode);
+            ViewData.Add("username", ReviewSettings.CurrentUser);
+            ViewData.Add("category", category);
+            ViewData.Add("sortOrder", sortOrder);
             return View();
         }
 
@@ -39,7 +44,7 @@ namespace MyNetwork.Controllers
         public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate)
         {
             if (description.Contains(TextModel.Context["typing description"])) description = "";
-            string userId = (await db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == CurrentUserSettings.currentUser)).Id;
+            string userId = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser)).Id;
             Review review = new Review() { Name = reviewName, CreationName = creationName, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), AuthorId = userId };
             db.Reviews.Add(review);
             db.SaveChanges();
@@ -66,27 +71,34 @@ namespace MyNetwork.Controllers
 
         public IActionResult SelectUser(string selectedUser)
         {
-            if (selectedUser != null) CurrentUserSettings.currentUser = selectedUser;
+            if (selectedUser != null) ReviewSettings.CurrentUser = selectedUser;
+            return RedirectToAction("Index", "MyPage");
+        }
+
+        public IActionResult ChangeParameters(string categoryFromView, string sortOrderFromView)
+        {
+            category = categoryFromView;
+            sortOrder = sortOrderFromView;
             return RedirectToAction("Index", "MyPage");
         }
 
         private async Task checkUserAsync()
         {
-            if (CurrentUserSettings.currentUser == "")
+            if (ReviewSettings.CurrentUser == "")
             {
-                CurrentUserSettings.currentUser = User.Identity?.Name!;
-                CurrentUserSettings.adminMode = await db.IsAdminAsync(CurrentUserSettings.currentUser) ? "available" : "not available";
+                ReviewSettings.CurrentUser = User.Identity?.Name!;
+                adminMode = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser)).IsAdmin == "No        " ? "not available" : "available";
             }
-            else if (CurrentUserSettings.currentUser != User.Identity?.Name!)
+            else if (ReviewSettings.CurrentUser != User.Identity?.Name!)
             {
-                CurrentUserSettings.adminMode = TextModel.Context["in admin mode"] + CurrentUserSettings.currentUser;
+                adminMode = TextModel.Context["in admin mode"] + ReviewSettings.CurrentUser;
             }
         }
 
         private void setAdminSettings()
         {
-            CurrentUserSettings.adminMode = "available";
-            CurrentUserSettings.currentUser = User.Identity?.Name!;
+            adminMode = "available";
+            ReviewSettings.CurrentUser = User.Identity?.Name!;
         }
     }
 }
