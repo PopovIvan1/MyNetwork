@@ -18,7 +18,7 @@ namespace MyNetwork.Controllers
             this.db = db;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> MyPage()
         {
             await checkUserAsync();
             ViewData.Model = db;
@@ -49,7 +49,7 @@ namespace MyNetwork.Controllers
             db.Reviews.Add(review);
             db.SaveChanges();
             await db.SetTagsToDb(tags, (await db.Reviews.FirstOrDefaultAsync(reviewFromDb => reviewFromDb.Date == review.Date && reviewFromDb.AuthorId == review.AuthorId)).Id);
-            return RedirectToAction("Index", "MyPage");
+            return RedirectToAction("MyPage", "MyPage");
         }
 
         public void UploadImage()
@@ -60,7 +60,7 @@ namespace MyNetwork.Controllers
         public IActionResult BackToMyPage()
         {
             setAdminSettings();
-            return RedirectToAction("Index", "MyPage");
+            return RedirectToAction("MyPage", "MyPage");
         }
 
         public IActionResult BackToAdminMode()
@@ -72,14 +72,14 @@ namespace MyNetwork.Controllers
         public IActionResult SelectUser(string selectedUser)
         {
             if (selectedUser != null) ReviewSettings.CurrentUser = selectedUser;
-            return RedirectToAction("Index", "MyPage");
+            return RedirectToAction("MyPage", "MyPage");
         }
 
         public IActionResult ChangeParameters(string categoryFromView, string sortOrderFromView)
         {
             category = categoryFromView;
             sortOrder = sortOrderFromView;
-            return RedirectToAction("Index", "MyPage");
+            return RedirectToAction("MyPage", "MyPage");
         }
 
         private async Task checkUserAsync()

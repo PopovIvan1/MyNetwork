@@ -40,7 +40,7 @@ namespace MyNetwork.Controllers
             (await db.GetUserByIdAsync(currentReview.AuthorId)).Likes -= currentReview.Likes;
             db.Reviews.Remove(currentReview);
             db.SaveChanges();
-            return RedirectToAction("Index", "MyPage");
+            return RedirectToAction("MyPage", "MyPage");
         }
 
         public async Task<IActionResult> UpdateReview(string reviewName, string creationName, string[] tags, string category, string description, string rate)
@@ -55,7 +55,7 @@ namespace MyNetwork.Controllers
             currentReview.AuthorRate= int.Parse(rate);
             db.SaveChanges();
             await db.SetTagsToDb(tags, currentReviewId);
-            return RedirectToAction("Index", "MyPage");
+            return RedirectToAction("MyPage", "MyPage");
         }
 
         public async Task<IActionResult> NewComment(string commentContext)
@@ -79,6 +79,15 @@ namespace MyNetwork.Controllers
                 db.Likes.Remove(await db.Likes.FirstOrDefaultAsync(like => like.UserId == userId && like.ReviewId == currentReviewId));
                 (await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId)).Likes--;
             }
+            db.SaveChanges();
+        }
+
+        public async Task ChangeRate(int rate, string creationName)
+        {
+            string userId = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser == "" ? User.Identity.Name : ReviewSettings.CurrentUser)).Id;
+            Rate currentRate = await db.Rates.FirstOrDefaultAsync(rate => rate.UserId == userId && rate.ReviewId == currentReviewId);
+            if (currentRate == null) db.Rates.Add(new Rate { UserRate = rate, ReviewId = currentReviewId, UserId = userId, CreationName = creationName });
+            else currentRate.UserRate = rate;
             db.SaveChanges();
         }
     }

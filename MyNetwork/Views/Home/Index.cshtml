@@ -34,6 +34,24 @@
         parent.appendChild(clone);
         document.getElementById('tag').value = "";
     }
+
+    function getUserRate(rate, id) {
+        let rateNumber = parseFloat(rate);
+        let i;
+        let starRate = '';
+        for (i = 0; i < 5; i++){
+            if (rateNumber >= i + 1) {
+                starRate += '<i class="bi bi-star-fill"></i>';
+            }
+            else if (rateNumber + 0.5 >= i + 1) {
+                starRate += '<i class="bi bi-star-half"></i>';
+            }
+            else {
+                starRate += '<i class="bi bi-star"></i>';
+            }
+        }
+        document.getElementById(id).insertAdjacentHTML("beforeend", starRate);
+    }
 </script>
 
 <div class="text-center">
@@ -130,7 +148,10 @@
                                 }
                             </p>
                             <p>@TextModel.Context["author rate"]@data.AuthorRate</p>
-                            <p>@TextModel.Context["users rate"]@data.UsersRate</p>
+                            <p>@TextModel.Context["users rate"]<label style="color: yellow" id="userRate-@data.Id"></label></p>
+                            <script>
+                                getUserRate('@data.UsersRate.ToString().Replace(',', '.')', 'userRate-@data.Id');
+                            </script>
                             <p>@TextModel.Context["date"]@data.Date.ToShortDateString()</p>
                             <p>@TextModel.Context["description"]</p>
                         }

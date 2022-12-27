@@ -11,6 +11,40 @@
 
 <script>
     let color;
+    function getUserRate(rate, id) {
+        let rateNumber = parseFloat(rate);
+        let i;
+        let starRate = '';
+        for (i = 0; i < 5; i++) {
+            if (rateNumber >= i + 1) {
+                starRate += '<i class="bi bi-star-fill"></i>';
+            }
+            else if (rateNumber + 0.5 >= i + 1) {
+                starRate += '<i class="bi bi-star-half"></i>';
+            }
+            else {
+                starRate += '<i class="bi bi-star"></i>';
+            }
+        }
+        document.getElementById(id).insertAdjacentHTML("beforeend", starRate);
+    };
+
+    function changeRate(newRate) {
+        document.getElementById('yourRate').innerHTML = '';
+        getUserRate(newRate, 'yourRate');
+        let stars = document.getElementById('yourRate').querySelectorAll("i");
+        stars.forEach((star, i) => {
+            star.onclick = function () { changeRate(i + 1) };
+        });
+        $.ajax({
+            url: "/Review/ChangeRate",
+            method: 'GET',
+            data: {
+                rate: newRate,
+                creationName: document.getElementById('creationName').innerHTML
+            }
+        });
+    }
 </script>
 
 <div class="row justify-content-md-center">
@@ -35,12 +69,28 @@
                         color = "";
                     </script>
                 }
+                Rate rate = Model.Rates.FirstOrDefault(rate => rate.UserId == ViewData["userId"] && rate.ReviewId == data.Id);
+                int userRate = 0;
+                if (rate != null)
+                {
+                    userRate = @rate.UserRate;
+                }
                 <div style="float: right">
                     <p>
                         <i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label>
                     </p>
                     <script>
                         document.getElementById('heart').style.color = color;
+                    </script>
+                    <p></p>
+                    @TextModel.Context["your rate"]:
+                    <label style="color: yellow" id="yourRate"></label>
+                    <script>
+                        getUserRate('@userRate.ToString()', 'yourRate');
+                        let stars = document.getElementById('yourRate').querySelectorAll("i");
+                        stars.forEach((star, i) => {
+                            star.onclick = function () { changeRate(i + 1) };
+                        })
                     </script>
                 </div>
                 <script>
@@ -76,7 +126,7 @@
                 </div>
             }
             <p>@TextModel.Context["reviewname"]@data.Name</p>
-            <p>@TextModel.Context["creation review name"]@data.CreationName</p>
+            <p>@TextModel.Context["creation review name"]<label id="creationName">@data.CreationName</label></p>
             User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
             <p>@TextModel.Context["author"]@user.UserName (<i style="color: green">@user.Likes</i>)</p>
             <p>@TextModel.Context["category"]@TextModel.Context[data.Category]</p>
@@ -87,7 +137,10 @@
                 }
             </p>
             <p>@TextModel.Context["author rate"]@data.AuthorRate</p>
-            <p>@TextModel.Context["users rate"]@data.UsersRate</p>
+            <p>@TextModel.Context["users rate"]<label style="color: yellow" id="userRate-@data.Id"></label></p>
+            <script>
+                getUserRate('@data.UsersRate.ToString().Replace(',', '.')', 'userRate-@data.Id');
+            </script>
             <p>@TextModel.Context["date"]@data.Date.ToShortDateString()</p>
             <p>@TextModel.Context["description"]</p>
             <p id="description"></p>
