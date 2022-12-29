@@ -8,10 +8,34 @@
 <div class="row justify-content-md-center">
     <div class="col-md-4">
         <section>
-            <button class="btn btn-primary" onclick="uploadImage();">@TextModel.Context["upload image"]</button>
-            Place for photo
-            <p></p>
-            <form asp-controller="MyPage" asp-action="AddReviewToDb" class="form-horizontal">
+            <form asp-controller="MyPage" asp-action="AddReviewToDb" class="form-horizontal" enctype="multipart/form-data">
+                <div class="form-floating" style="color: #555; font-size: 18px; text-align: center; width: 400px; height: 150px; margin: 50px auto; background: #eee; border: 1px solid #ccc;">
+                    <input name="image" title="" class="form-control" style="opacity: 0; z-index: -1; width: 400px; height: 400px" type="file" id="dropZone" accept="image/*" />
+                    <label class="form-label" id="image">@TextModel.Context["upload image"]</label>
+                </div>
+                <script>
+                    let load = document.querySelector('#image');
+
+                    document.querySelector('#dropZone').addEventListener('change', function (e) {
+                        let tgt = e.target || window.event.srcElement,
+                            files = tgt.files;
+
+                        load.innerHTML = '';
+
+                        if (files && files.length) {
+                            for (let i = 0; i < files.length; i++) {
+                                let $self = files[i],
+                                    fr = new FileReader();
+                                fr.onload = function (e) {
+                                    load.insertAdjacentHTML('beforeEnd', `<div class="load-img"><img src="${e.srcElement.result}" width="30%"/><p>${$self.name}</p></div>`);
+                                    document.getElementById('dropZone').innerHTML = e.srcElement.result;
+                                }
+                                fr.readAsDataURL(files[i]);
+                            };
+                        }
+                    });
+                </script>
+                <p></p>
                 <div class="form-floating" style="color:black;">
                     <input name="reviewName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
                     <label class="form-label">@TextModel.Context["review name"]</label>
@@ -79,13 +103,6 @@
 </script>
 
 <script>
-    function uploadImage() {
-        $.ajax({
-            url: "/MyPage/UploadImage",
-            method: 'GET',
-        });
-    }
-
     function addTagLabel() {
         let isEmptyTags = 0;
         let tags = document.querySelectorAll("#tagContent");

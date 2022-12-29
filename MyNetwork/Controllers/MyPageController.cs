@@ -4,6 +4,7 @@ using MyNetwork.Data;
 using MyNetwork.Models;
 using System.Web;
 
+
 namespace MyNetwork.Controllers
 {
     public class MyPageController : Controller
@@ -41,20 +42,26 @@ namespace MyNetwork.Controllers
             return View();
         }
 
-        public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate)
+        public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image)
         {
             if (description.Contains(TextModel.Context["typing description"])) description = "";
-            string userId = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser)).Id;
-            Review review = new Review() { Name = reviewName, CreationName = creationName, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), AuthorId = userId };
+            string imgName = "";
+            string userId = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser == "" ? User.Identity?.Name! : ReviewSettings.CurrentUser)).Id;
+            if (image != null && image.ContentType.Contains("image"))
+            {
+                imgName = DateTime.Now.ToString().Replace('.', '-').Replace(' ', '-').Replace(':', '-').Replace('/', '-') + '.' + image.FileName.Split('.').Last();
+                using (var fileStream = image.OpenReadStream())
+                {
+                    byte[] bytes = new byte[image.Length];
+                    fileStream.Read(bytes, 0, (int)image.Length);
+                    await ImageService.Upload(imgName, bytes);
+                }
+            }
+            Review review = new Review() { Name = reviewName, CreationName = creationName, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), AuthorId = userId, ImageUrl = imgName };
             db.Reviews.Add(review);
             db.SaveChanges();
             await db.SetTagsToDb(tags, (await db.Reviews.FirstOrDefaultAsync(reviewFromDb => reviewFromDb.Date == review.Date && reviewFromDb.AuthorId == review.AuthorId)).Id);
             return RedirectToAction("MyPage", "MyPage");
-        }
-
-        public void UploadImage()
-        {
-
         }
 
         public IActionResult BackToMyPage()

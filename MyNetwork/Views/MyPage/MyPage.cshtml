@@ -106,12 +106,23 @@
                 </form>
                 <p></p>
                 <form asp-controller="Review" asp-action="RemoveReview" class="form-horizontal">
-                    <p><button type="submit" class="btn btn-danger" name="review" value="@data.Id"><i class="bi bi-trash"></i> @TextModel.Context["remove"]</button></p>
+                    <p><button type="submit" class="btn btn-danger" name="reviewId" value="@data.Id"><i class="bi bi-trash"></i> @TextModel.Context["remove"]</button></p>
                 </form>
             </td>
             <td id="@data.Id" align="left" style="width: 80%">
                 @{
-                    <p style="float: right">@TextModel.Context["likes"]@data.Likes</p>
+                    <div id="likes-@data.Id" style="float: right">
+                        <p>@TextModel.Context["likes"]@data.Likes</p>
+                    </div>
+                    if (data.ImageUrl != "")
+                    {
+                        string imgName = data.ImageUrl;
+                        byte[] imgBytes = await ImageService.Download(imgName);
+                        string str = Convert.ToBase64String(imgBytes);
+                        <script>
+                            document.getElementById('likes-@data.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 200px;" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+                        </script>
+                    }
                     <p>@TextModel.Context["reviewname"]@data.Name</p>
                     <p>@TextModel.Context["creation review name"]@data.CreationName</p>
                     User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());

@@ -75,7 +75,7 @@
                 {
                     userRate = @rate.UserRate;
                 }
-                <div style="float: right">
+                <div style="float: right" id="likes">
                     <p>
                         <i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label>
                     </p>
@@ -121,9 +121,18 @@
             }
             else
             {
-                <div style="float: right">
+                <div style="float: right" id="likes">
                     @TextModel.Context["likes"]@data.Likes
                 </div>
+            }
+            if (data.ImageUrl != "")
+            {
+                string imgName = data.ImageUrl;
+                byte[] imgBytes = await ImageService.Download(imgName);
+                string str = Convert.ToBase64String(imgBytes);
+                <script>
+                    document.getElementById('likes').insertAdjacentHTML("beforeend",'<p><img style="width: 200px;" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+                </script>
             }
             <p>@TextModel.Context["reviewname"]@data.Name</p>
             <p>@TextModel.Context["creation review name"]<label id="creationName">@data.CreationName</label></p>

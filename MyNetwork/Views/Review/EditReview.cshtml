@@ -33,6 +33,9 @@
         if (document.getElementById('number').value > 10) {
             document.getElementById('number').value = 10;
         }
+        if (document.getElementById('number').value == '' || document.getElementById('number').value == null) {
+            document.getElementById('number').value = 0;
+        }
     }
 </script>
 
@@ -46,16 +49,50 @@
 <div class="row justify-content-md-center">
     <div class="col-md-4">
         <section>
-            <button class="btn btn-primary" onclick="uploadImage();">@TextModel.Context["upload image"]</button>
-            Place for photo
-            <p></p>
-            <form asp-controller="Review" asp-action="UpdateReview" class="form-horizontal">
+            <form asp-controller="Review" asp-action="UpdateReview" class="form-horizontal" enctype="multipart/form-data">
+                <div class="form-floating" style="color: #555; font-size: 18px; text-align: center; width: 400px; height: 150px; margin: 50px auto; background: #eee; border: 1px solid #ccc;">
+                    <input name="image" title="" class="form-control" style="opacity: 0; z-index: -1; width: 400px; height: 400px" type="file" id="dropZone" accept="image/*" />
+                    <label class="form-label" id="image">@TextModel.Context["upload image"]</label>
+                </div>
+                <script>
+                    let load = document.querySelector('#image');
+
+                    document.querySelector('#dropZone').addEventListener('change', function (e) {
+                        let tgt = e.target || window.event.srcElement,
+                            files = tgt.files;
+
+                        load.innerHTML = '';
+
+                        if (files && files.length) {
+                            for (let i = 0; i < files.length; i++) {
+                                let $self = files[i],
+                                    fr = new FileReader();
+                                fr.onload = function (e) {
+                                    load.insertAdjacentHTML('beforeEnd', `<div class="load-img"><img src="${e.srcElement.result}" width="30%"/><p>${$self.name}</p></div>`);
+                                    document.getElementById('dropZone').innerHTML = e.srcElement.result;
+                                }
+                                fr.readAsDataURL(files[i]);
+                            };
+                        }
+                    });
+                </script>
+                @if (data.ImageUrl != "")
+                {
+                    string imgName = data.ImageUrl;
+                    byte[] imgBytes = await ImageService.Download(imgName);
+                    string str = Convert.ToBase64String(imgBytes);
+                    <script>
+                        document.querySelector('#image').innerHTML='';
+                        document.querySelector('#image').insertAdjacentHTML("beforeend", '<p><img style="width: 30%;" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+                    </script>
+                }
+                <p></p>
                 <div class="form-floating" style="color:black;">
                     <input name="reviewName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" value="@data.Name" />
                     <label class="form-label">@TextModel.Context["review name"]</label>
                 </div>
                 <div class="form-floating" style="color:black;">
-                    <input name="creationName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" value="@data.CreationName"/>
+                    <input name="creationName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" value="@data.CreationName" />
                     <label class="form-label">@TextModel.Context["creation name"]</label>
                 </div>
                 <div class="form-floating" id="tags">

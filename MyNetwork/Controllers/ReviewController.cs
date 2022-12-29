@@ -34,20 +34,35 @@ namespace MyNetwork.Controllers
             return View();
         }
 
-        public async Task<IActionResult> RemoveReview(string review)
+        public async Task<IActionResult> RemoveReview(string reviewId)
         {
-            Review currentReview = await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId);
+            Review currentReview = await db.Reviews.FirstOrDefaultAsync(review => review.Id == int.Parse(reviewId));
             (await db.GetUserByIdAsync(currentReview.AuthorId)).Likes -= currentReview.Likes;
+            ImageService.Remove(currentReview.ImageUrl);
+            await db.Rates.Where(rate => rate.ReviewId == currentReview.Id).ForEachAsync(rate => db.Rates.Remove(rate));
             db.Reviews.Remove(currentReview);
             db.SaveChanges();
             return RedirectToAction("MyPage", "MyPage");
         }
 
-        public async Task<IActionResult> UpdateReview(string reviewName, string creationName, string[] tags, string category, string description, string rate)
+        public async Task<IActionResult> UpdateReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image)
         {
             await db.RemoveTags(currentReviewId);
             db.SaveChanges();
             Review currentReview = await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId);
+            string imgName = "";
+            if (image != null && image.ContentType.Contains("image"))
+            {
+                ImageService.Remove(currentReview.ImageUrl);
+                imgName = DateTime.Now.ToString().Replace('.', '-').Replace(' ', '-').Replace(':', '-').Replace('/', '-') + '.' + image.FileName.Split('.').Last();
+                using (var fileStream = image.OpenReadStream())
+                {
+                    byte[] bytes = new byte[image.Length];
+                    fileStream.Read(bytes, 0, (int)image.Length);
+                    await ImageService.Upload(imgName, bytes);
+                }
+                currentReview.ImageUrl = imgName;
+            }
             currentReview.Name = reviewName;
             currentReview.CreationName = creationName;
             currentReview.Category = category;
