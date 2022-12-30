@@ -16,6 +16,7 @@ namespace MyNetwork.Models
         public DbSet<Tag> Tags { get; set; } = null!;
         public DbSet<ReviewTag> ReviewTags { get; set; } = null!;
         public DbSet<Like> Likes { get; set; } = null!;
+        public DbSet<AdminData> AdminDatas { get; set; } = null!;
 
         public async Task<User> FindUserByNameAsync(string username)
         {

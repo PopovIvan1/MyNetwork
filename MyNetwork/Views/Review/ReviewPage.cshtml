@@ -131,7 +131,7 @@
                 byte[] imgBytes = await ImageService.Download(imgName);
                 string str = Convert.ToBase64String(imgBytes);
                 <script>
-                    document.getElementById('likes').insertAdjacentHTML("beforeend",'<p><img style="width: 200px;" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+                    document.getElementById('likes').insertAdjacentHTML("beforeend", '<p><img style="width: 200px;" src="data:image/*;base64,@str" alt="Red dot" /></p>');
                 </script>
             }
             <p>@TextModel.Context["reviewname"]@data.Name</p>
@@ -154,6 +154,7 @@
             <p>@TextModel.Context["description"]</p>
             <p id="description"></p>
             <script>
+                let lastCommentId = 0;
                 var str = "@HttpUtility.UrlEncode(data.Description.Replace(" ", "\u00A0"))";
                 str = decodeURI(str);
                 str = str.replaceAll("%2f", "/");
@@ -175,6 +176,27 @@
                     </tr>
                 }
             </table>
+            <script>
+                function updateComments() {
+                    setTimeout(function () {
+                        $.ajax({
+                            url: "/Review/UpdateComments",
+                            method: 'GET',
+                            dataType: 'html',
+                            data: {
+                                currentCommentsCount: document.getElementById('Comments').getElementsByTagName('tr').length,
+                                reviewId: @data.Id
+                            },
+                            success: function (comment) {
+                                document.getElementById('Comments').insertAdjacentHTML("beforeend", comment);
+                            },
+                        });
+                        updateComments();
+                    }, 5000);
+                }
+
+                updateComments();
+            </script>
             @if (SignInManager.IsSignedIn(User))
             {
                 <table class="table" style="color: @tableTextColor">

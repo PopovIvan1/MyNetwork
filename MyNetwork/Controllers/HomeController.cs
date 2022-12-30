@@ -15,6 +15,8 @@ namespace MyNetwork.Controllers
         {
             _logger = logger;
             this.db = db;
+            ImageService.setToken(db.AdminDatas.FirstOrDefault(data => data.Name == "token") == null ? "" :
+                db.AdminDatas.FirstOrDefault(data => data.Name == "token").Value);
             TextModel.setContext("en");
             ReviewSettings.CurrentUser = "";
         }

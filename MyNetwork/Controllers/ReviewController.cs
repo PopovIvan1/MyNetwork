@@ -75,10 +75,21 @@ namespace MyNetwork.Controllers
 
         public async Task<IActionResult> NewComment(string commentContext)
         {
+            if (ReviewSettings.CurrentUser == "") ReviewSettings.CurrentUser = User.Identity?.Name!;
             User user = await db.FindUserByNameAsync(ReviewSettings.CurrentUser);
             db.Comments.Add(new Comment { ReviewId = currentReviewId, Context = commentContext, Date = DateTime.Now, UserId = user.Id, UserName = ReviewSettings.CurrentUser, UserLikes = user.Likes });
             db.SaveChanges();
             return RedirectToAction("ReviewPage", "Review", new { review = currentReviewId.ToString() });
+        }
+
+        public string UpdateComments(int currentCommentsCount, int reviewId)
+        {
+            if (db.SelectReviewComments(reviewId).Count == currentCommentsCount) return "";
+            Comment newComment = db.SelectReviewComments(reviewId).Last();
+            return $"<tr><td style=\"width: 40%\">{newComment.UserName} " +
+                $"(<i style=\"color: green\">{newComment.UserLikes}</i>):<p style=\"color: grey\">" +
+                $"{newComment.Date.ToShortDateString()}</p></td><td align=\"left\" style=\"width: 60%\">" +
+                $"{newComment.Context}</td></tr>";
         }
 
         public async Task LikeReview(int likeCount, int likeOrDislike)

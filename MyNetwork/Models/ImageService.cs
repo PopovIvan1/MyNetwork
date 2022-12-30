@@ -6,8 +6,9 @@ namespace MyNetwork.Models
 {
     public static class ImageService
     {
+        private static string token = "";
         private static string folder = "images";
-        private static DropboxClient dbx = new DropboxClient("sl.BV4vGXaoBGtjts1Ynga2BhuadlA7u0n6rTGg80iKc_wWSm_UsGUq47igvsDLp5Dw4j9Q3JWZ-9pO-qw-pnrgFA1Jq8DBilQUwoJj8XhQwzVU_86Atn0TwEw1TTJFFP7e6RX__aLi1nh7");
+        private static DropboxClient dbx = new DropboxClient(token);
 
         public static async Task Upload(string file, byte[] content)
         {
@@ -18,6 +19,12 @@ namespace MyNetwork.Models
                     WriteMode.Overwrite.Instance,
                     body: mem);
             }
+        }
+
+        public static void setToken(string accessToken)
+        {
+            token = accessToken;
+            dbx = new DropboxClient(token);
         }
 
         public static async Task<byte[]> Download(string file)
