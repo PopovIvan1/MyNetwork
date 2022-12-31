@@ -31,7 +31,7 @@
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-info border-bottom box-shadow mb-3">
-            <div class="container-fluid" style="border-bottom-style: solid; border-bottom-color: red; border-top-style: solid; border-top-color: red;">
+            <div class="container-fluid" style="border-bottom-style: solid; border-bottom-color: red; border-top-style: solid; border-top-color: red" id="navbar">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index"><i class="bi bi-house"></i>@TextModel.Context["home"]</a>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
@@ -72,8 +72,24 @@
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
+                <button style="display: none; float: right; color: black; font-size: 20px; background-color: transparent; border-color: transparent" id="menu" onclick="displayMenu()" class="bi bi-justify"></button>
             </div>
         </nav>
+        <div style="color: black; display: none; float: right; background-color: #04cbf0; position: absolute; right: 0px; top: 50px" id="menuContent">
+            <select style="margin-top: 0.4em; margin-right: 0.8em" onchange="changeLanguage();" id="languageMobileSelector">
+                <option value="@("en")">@TextModel.Context["english"]</option>
+                <option value="@("ru")">@TextModel.Context["russian"]</option>
+            </select>
+            <p></p>
+            <select style="margin-top: 0.4em; margin-right: 0.8em" onchange="changeTheme();" id="themeMobileSelector">
+                <option value="@("light")">@TextModel.Context["light"]</option>
+                <option value="@("dark")">@TextModel.Context["dark"]</option>
+            </select>
+            <script>
+                document.getElementById('languageMobileSelector').value = "@currentLanguage";
+                document.getElementById('themeMobileSelector').value = "@currentTheme";
+            </script>
+        </div>
     </header>
     <div class="container">
         <main role="main" class="pb-3">
@@ -86,6 +102,28 @@
     @await RenderSectionAsync("Scripts", required: false)
     <div id="lastDiv"></div>
     <script>
+        let parrent = document.getElementById('menuContent');
+        document.getElementById('navbar').querySelectorAll('li').forEach((element, index) => {
+            if (index == 0) {
+                let clone = element.querySelector('a').cloneNode(true);
+                parrent.appendChild(clone);
+            }
+            else if (index == 5) {
+                let clone = element.querySelector('a').cloneNode(true);
+                parrent.appendChild(clone);
+            }
+            else if (index == 6) {
+                if (element.querySelectorAll('a').length > 0) {
+                    let clone = element.querySelector('a').cloneNode(true);
+                    parrent.appendChild(clone);
+                }
+                else {
+                    let clone = element.querySelector('form').cloneNode(true);
+                    parrent.appendChild(clone);
+                }
+            }
+        });
+
         $(document).ready(function () {
             $("#lastDiv").nextAll("center").remove();
             $("#lastDiv").nextAll("div").remove();
@@ -101,12 +139,16 @@
         });
     </script>
     <script>
+        let displayMode = 'none';
         function changeTheme() {
+            let id;
+            if (document.getElementById('menuContent').style.display == 'none') id = 'themeSelector';
+            else id = 'themeMobileSelector';
             $.ajax({
                 url: "/Home/ChangeTheme",
                 method: 'GET',
                 data: {
-                    theme: document.getElementById('themeSelector').value
+                    theme: document.getElementById(id).value
                 }
             });
             setTimeout(function () {
@@ -114,17 +156,53 @@
             }, 700);
         }
         function changeLanguage() {
+            let id;
+            if (document.getElementById('menuContent').style.display == 'none') id = 'languageSelector';
+            else id = 'languageMobileSelector';
             $.ajax({
                 url: "/Home/ChangeLanguage",
                 method: 'GET',
                 data: {
-                    language: document.getElementById('languageSelector').value
+                    language: document.getElementById(id).value
                 }
             });
             setTimeout(function () {
                 location.reload();
             }, 700);
         }
+
+        function displayMenu() {
+            if (displayMode == 'none') {
+                document.getElementById('menuContent').style.display = 'block';
+                displayMode = 'block';
+            }
+            else {
+                document.getElementById('menuContent').style.display = 'none';
+                displayMode = 'none';
+            }
+        }
+
+        function AutoScale() {
+            let width = window.innerWidth;
+            let elements = document.getElementById('navbar').querySelectorAll('li');
+            if (width < 800) {
+                elements.forEach(element => {
+                    element.style.display = 'none';
+                });
+                document.getElementById('menu').style.display = 'block';
+            }
+            else {
+                elements.forEach(element => {
+                    element.style.display = 'block';
+                });
+                document.getElementById('menu').style.display = 'none';
+                document.getElementById('menuContent').style.display = 'none';
+                displayMode = 'none';
+            }
+        }
+
+        window.addEventListener("resize", AutoScale);
+        AutoScale();
     </script>
 </body>
 </html>

@@ -135,8 +135,10 @@
                     <td><button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
                     <td id="@data.Id" align="left" style="width: 80%">
                         @{
-                            <div id="likes-@data.Id" style="float: right">
-                                <p>@TextModel.Context["likes"]@data.Likes</p>
+                            <div class="wrapper" style="width: 30%; float: right;" id="likes-@data.Id">
+                                <div style="float: right;">
+                                    <p>@TextModel.Context["likes"]@data.Likes</p>
+                                </div>
                             </div>
                             if (data.ImageUrl != "")
                             {
@@ -144,7 +146,7 @@
                                 byte[] imgBytes = await ImageService.Download(imgName);
                                 string str = Convert.ToBase64String(imgBytes);
                                 <script>
-                                    document.getElementById('likes-@data.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 200px;" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+                                    document.getElementById('likes-@data.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
                                 </script>
                             }
                             <p>@TextModel.Context["reviewname"]@data.Name</p>

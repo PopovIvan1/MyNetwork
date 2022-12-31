@@ -48,7 +48,7 @@
 </script>
 
 <div class="row justify-content-md-center">
-    <div class="col-md-5">
+    <div class="col-md-6">
 
         @{
             string tableTextColor;
@@ -75,23 +75,25 @@
                 {
                     userRate = @rate.UserRate;
                 }
-                <div style="float: right" id="likes">
-                    <p>
-                        <i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label>
-                    </p>
-                    <script>
-                        document.getElementById('heart').style.color = color;
-                    </script>
-                    <p></p>
-                    @TextModel.Context["your rate"]:
-                    <label style="color: yellow" id="yourRate"></label>
-                    <script>
-                        getUserRate('@userRate.ToString()', 'yourRate');
-                        let stars = document.getElementById('yourRate').querySelectorAll("i");
-                        stars.forEach((star, i) => {
-                            star.onclick = function () { changeRate(i + 1) };
-                        })
-                    </script>
+                <div class="wrapper" style="width: 30%; float: right;" id="likes-@data.Id">
+                    <div style="float: right" id="likes">
+                        <p>
+                            <i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label>
+                        </p>
+                        <script>
+                            document.getElementById('heart').style.color = color;
+                        </script>
+                        <p></p>
+                        @TextModel.Context["your rate"]:
+                        <label style="color: yellow" id="yourRate"></label>
+                        <script>
+                            getUserRate('@userRate.ToString()', 'yourRate');
+                            let stars = document.getElementById('yourRate').querySelectorAll("i");
+                            stars.forEach((star, i) => {
+                                star.onclick = function () { changeRate(i + 1) };
+                            })
+                        </script>
+                    </div>
                 </div>
                 <script>
                     function like() {
@@ -121,8 +123,10 @@
             }
             else
             {
-                <div style="float: right" id="likes">
-                    @TextModel.Context["likes"]@data.Likes
+                <div class="wrapper" style="width: 30%; float: right;" id="likes-@data.Id">
+                    <div style="float: right" id="likes">
+                        @TextModel.Context["likes"]@data.Likes
+                    </div>
                 </div>
             }
             if (data.ImageUrl != "")
@@ -131,7 +135,7 @@
                 byte[] imgBytes = await ImageService.Download(imgName);
                 string str = Convert.ToBase64String(imgBytes);
                 <script>
-                    document.getElementById('likes').insertAdjacentHTML("beforeend", '<p><img style="width: 200px;" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+                    document.getElementById('likes').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
                 </script>
             }
             <p>@TextModel.Context["reviewname"]@data.Name</p>
@@ -186,7 +190,7 @@
                             data: {
                                 currentCommentsCount: document.getElementById('Comments').getElementsByTagName('tr').length,
                                 reviewId: @data.Id
-                            },
+                                            },
                             success: function (comment) {
                                 document.getElementById('Comments').insertAdjacentHTML("beforeend", comment);
                             },
