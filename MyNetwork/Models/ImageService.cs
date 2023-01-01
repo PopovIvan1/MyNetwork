@@ -37,7 +37,7 @@ namespace MyNetwork.Models
 
         public static async Task Remove(string file)
         {
-            await dbx.Files.DeleteAsync("/" + folder + "/" + file);
+            await dbx.Files.DeleteV2Async("/" + folder + "/" + file);
         }
     }
 }

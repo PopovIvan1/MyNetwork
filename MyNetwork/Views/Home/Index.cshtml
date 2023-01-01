@@ -1,58 +1,13 @@
-﻿@using System;
-@using System.Web;
-@using System.IO;
-
-@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
 @{
     string tableTextColor;
-    if (HttpContextAccessor.HttpContext.Request.Cookies["theme"] == "dark") tableTextColor = "white";
+    if (HttpContextAccessor.HttpContext?.Request.Cookies["theme"] == "dark") tableTextColor = "white";
     else tableTextColor = "dark";
     ViewData["Title"] = "Home Page";
 }
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
-
-<script>
-    function addTagLabel() {
-        let isEmptyTags = 0;
-        let tags = document.querySelectorAll("#labelForTags");
-        tags.forEach(item => {
-            if (item.querySelector("#tag").value == "") isEmptyTags += 1;
-            if (isEmptyTags > 1 && item.querySelector("#tag").value == "") item.remove();
-        });
-        if (isEmptyTags == 0) {
-            createNewTag();
-        }
-    }
-
-    function createNewTag() {
-        let parent = document.getElementById('tags');
-        let elem = parent.querySelector('.form-floating');
-
-        let clone = elem.cloneNode(true);
-        parent.appendChild(clone);
-        document.getElementById('tag').value = "";
-    }
-
-    function getUserRate(rate, id) {
-        let rateNumber = parseFloat(rate);
-        let i;
-        let starRate = '';
-        for (i = 0; i < 5; i++){
-            if (rateNumber >= i + 1) {
-                starRate += '<i class="bi bi-star-fill"></i>';
-            }
-            else if (rateNumber + 0.5 >= i + 1) {
-                starRate += '<i class="bi bi-star-half"></i>';
-            }
-            else {
-                starRate += '<i class="bi bi-star"></i>';
-            }
-        }
-        document.getElementById(id).insertAdjacentHTML("beforeend", starRate);
-    }
-</script>
 
 <div class="text-center">
     <h1 class="display-4">@TextModel.Context["main"]</h1>
@@ -72,7 +27,7 @@
                 </select>
             </div>
             <script>
-                document.getElementById('categorySelector').value = "@ViewData["category"].ToString()";
+                document.getElementById('categorySelector').value = "@ViewData["category"]?.ToString()";
             </script>
             <p></p>
             <div class="form-floating">
@@ -85,7 +40,7 @@
             </div>
             <p></p>
             <script>
-                document.getElementById('searchTypeSelector').value = "@ViewData["searchType"].ToString()";
+                document.getElementById('searchTypeSelector').value = "@ViewData["searchType"]?.ToString()";
             </script>
             <div class="form-floating" id="tagsLocation">
                 <script>
@@ -129,7 +84,7 @@
     <p></p>
     <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">
         <table class="table" style="border-style: solid; border-color: red; color: @tableTextColor; ">
-            @foreach (var data in ViewData.Model.SelectReviewsWithSettings())
+            @foreach (var data in ViewData.Model.SelectReviewsWithSettings(ViewData["category"]?.ToString(), ViewData["searchType"]?.ToString(), ViewData["tags"].ToString()))
             {
                 <tr>
                     <td><button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
@@ -140,43 +95,17 @@
                                     <p>@TextModel.Context["likes"]@data.Likes</p>
                                 </div>
                             </div>
-                            if (data.ImageUrl != "")
-                            {
-                                string imgName = data.ImageUrl;
-                                byte[] imgBytes = await ImageService.Download(imgName);
-                                string str = Convert.ToBase64String(imgBytes);
-                                <script>
-                                    document.getElementById('likes-@data.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
-                                </script>
-                            }
-                            <p>@TextModel.Context["reviewname"]@data.Name</p>
-                            <p>@TextModel.Context["creation review name"]@data.CreationName</p>
                             User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
-                            <p>@TextModel.Context["author"]@user.UserName (<i style="color: green">@user.Likes</i>)</p>
-                            <p>@TextModel.Context["category"]@TextModel.Context[data.Category]</p>
-                            <p>
-                                @TextModel.Context["tag"] @foreach (var tag in ViewData.Model.SelectReviewTags(data.Id))
-                                {
-                                    <label>@tag </label>
-                                }
-                            </p>
-                            <p>@TextModel.Context["author rate"]@data.AuthorRate</p>
-                            <p>@TextModel.Context["users rate"]<label style="color: yellow" id="userRate-@data.Id"></label></p>
-                            <script>
-                                getUserRate('@data.UsersRate.ToString().Replace(',', '.')', 'userRate-@data.Id');
-                            </script>
-                            <p>@TextModel.Context["date"]@data.Date.ToShortDateString()</p>
-                            <p>@TextModel.Context["description"]</p>
+                            ViewData.Add("authorName", user.UserName);
+                            ViewData.Add("likes", user.Likes);
+                            ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(data.Id)));
+                            <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
+                            ViewData.Remove("authorName");
+                            ViewData.Remove("likes");
+                            ViewData.Remove("reviewTags");
                         }
                     </td>
                 </tr>
-                <script>
-                    var str = "@HttpUtility.UrlEncode(data.Description.Replace(" ", "\u00A0"))";
-                    str = decodeURI(str);
-                    str = str.replaceAll("%2f", "/");
-                    str = str.replaceAll("%26nbsp%3b", " ");
-                    document.getElementById('@data.Id').insertAdjacentHTML("beforeend", str);
-                </script>
             }
         </table>
     </form>

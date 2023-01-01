@@ -4,9 +4,9 @@
 @inject UserManager<IdentityUser> UserManager
 
 @{
-    string currentTheme = HttpContextAccessor.HttpContext.Request.Cookies["theme"] == null
+    string currentTheme = HttpContextAccessor.HttpContext?.Request.Cookies["theme"] == null
         || HttpContextAccessor.HttpContext.Request.Cookies["theme"] == "light" ? "light" : "dark";
-    string currentLanguage = HttpContextAccessor.HttpContext.Request.Cookies["language"] == null
+    string currentLanguage = HttpContextAccessor.HttpContext?.Request.Cookies["language"] == null
         || HttpContextAccessor.HttpContext.Request.Cookies["language"] == "en" ? "en" : "ru";
 }
 
@@ -75,7 +75,7 @@
                 <button style="display: none; float: right; color: black; font-size: 20px; background-color: transparent; border-color: transparent" id="menu" onclick="displayMenu()" class="bi bi-justify"></button>
             </div>
         </nav>
-        <div style="color: black; display: none; float: right; background-color: #04cbf0; position: absolute; right: 0px; top: 50px" id="menuContent">
+        <div style="color: black; display: none; float: right; background-color: #04cbf0; position: absolute; right: 0px; top: 50px; z-index: 100" id="menuContent">
             <select style="margin-top: 0.4em; margin-right: 0.8em" onchange="changeLanguage();" id="languageMobileSelector">
                 <option value="@("en")">@TextModel.Context["english"]</option>
                 <option value="@("ru")">@TextModel.Context["russian"]</option>
@@ -91,118 +91,29 @@
             </script>
         </div>
     </header>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+    @{
+        if (CurrentUserSettings.AdminMode != "" && CurrentUserSettings.AdminMode != "available" && CurrentUserSettings.AdminMode != "not available")
+        {
+            @CurrentUserSettings.AdminMode
+            <div class="row">
+                <div class="col-md-2">
+                    <form asp-controller="MyPage" asp-action="BackToAdminMode" class="form-horizontal">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-square"></i> @TextModel.Context["back to admin mode"]</button>
+                    </form>
+                </div>
+            </div>
+            <p></p>
+        }
+    }
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
     <div id="lastDiv"></div>
-    <script>
-        let parrent = document.getElementById('menuContent');
-        document.getElementById('navbar').querySelectorAll('li').forEach((element, index) => {
-            if (index == 0) {
-                let clone = element.querySelector('a').cloneNode(true);
-                parrent.appendChild(clone);
-            }
-            else if (index == 5) {
-                let clone = element.querySelector('a').cloneNode(true);
-                parrent.appendChild(clone);
-            }
-            else if (index == 6) {
-                if (element.querySelectorAll('a').length > 0) {
-                    let clone = element.querySelector('a').cloneNode(true);
-                    parrent.appendChild(clone);
-                }
-                else {
-                    let clone = element.querySelector('form').cloneNode(true);
-                    parrent.appendChild(clone);
-                }
-            }
-        });
-
-        $(document).ready(function () {
-            $("#lastDiv").nextAll("center").remove();
-            $("#lastDiv").nextAll("div").remove();
-            setTimeout(function () {
-                $("#lastDiv").nextAll("div").remove();
-            }, 500);
-            setTimeout(function () {
-                $("#lastDiv").nextAll("div").remove();
-            }, 1000);
-            setTimeout(function () {
-                $("#lastDiv").nextAll("div").remove();
-            }, 3000);
-        });
-    </script>
-    <script>
-        let displayMode = 'none';
-        function changeTheme() {
-            let id;
-            if (document.getElementById('menuContent').style.display == 'none') id = 'themeSelector';
-            else id = 'themeMobileSelector';
-            $.ajax({
-                url: "/Home/ChangeTheme",
-                method: 'GET',
-                data: {
-                    theme: document.getElementById(id).value
-                }
-            });
-            setTimeout(function () {
-                location.reload();
-            }, 700);
-        }
-        function changeLanguage() {
-            let id;
-            if (document.getElementById('menuContent').style.display == 'none') id = 'languageSelector';
-            else id = 'languageMobileSelector';
-            $.ajax({
-                url: "/Home/ChangeLanguage",
-                method: 'GET',
-                data: {
-                    language: document.getElementById(id).value
-                }
-            });
-            setTimeout(function () {
-                location.reload();
-            }, 700);
-        }
-
-        function displayMenu() {
-            if (displayMode == 'none') {
-                document.getElementById('menuContent').style.display = 'block';
-                displayMode = 'block';
-            }
-            else {
-                document.getElementById('menuContent').style.display = 'none';
-                displayMode = 'none';
-            }
-        }
-
-        function AutoScale() {
-            let width = window.innerWidth;
-            let elements = document.getElementById('navbar').querySelectorAll('li');
-            if (width < 800) {
-                elements.forEach(element => {
-                    element.style.display = 'none';
-                });
-                document.getElementById('menu').style.display = 'block';
-            }
-            else {
-                elements.forEach(element => {
-                    element.style.display = 'block';
-                });
-                document.getElementById('menu').style.display = 'none';
-                document.getElementById('menuContent').style.display = 'none';
-                displayMode = 'none';
-            }
-        }
-
-        window.addEventListener("resize", AutoScale);
-        AutoScale();
-    </script>
 </body>
 </html>

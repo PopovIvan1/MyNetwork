@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Dropbox.Api.TeamLog;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyNetwork.Data;
 using MyNetwork.Models;
@@ -10,7 +11,6 @@ namespace MyNetwork.Controllers
     public class MyPageController : Controller
     {
         private ApplicationContext db;
-        private static string adminMode = "not available";
         private static string category = "all";
         private static string sortOrder = "no sort";
 
@@ -19,12 +19,11 @@ namespace MyNetwork.Controllers
             this.db = db;
         }
 
-        public async Task<IActionResult> MyPage()
+        public IActionResult MyPage()
         {
-            await checkUserAsync();
+            if (CurrentUserSettings.AdminMode == "") CurrentUserSettings.AdminMode = CurrentUserSettings.CurrentUser.IsAdmin == "No        " ? "not available" : "available";
             ViewData.Model = db;
-            ViewData.Add("admin mode", adminMode);
-            ViewData.Add("username", ReviewSettings.CurrentUser);
+            ViewData.Add("username", CurrentUserSettings.CurrentUser.UserName);
             ViewData.Add("category", category);
             ViewData.Add("sortOrder", sortOrder);
             return View();
@@ -46,7 +45,6 @@ namespace MyNetwork.Controllers
         {
             if (description.Contains(TextModel.Context["typing description"])) description = "";
             string imgName = "";
-            string userId = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser == "" ? User.Identity?.Name! : ReviewSettings.CurrentUser)).Id;
             if (image != null && image.ContentType.Contains("image"))
             {
                 imgName = DateTime.Now.ToString().Replace('.', '-').Replace(' ', '-').Replace(':', '-').Replace('/', '-') + '.' + image.FileName.Split('.').Last();
@@ -57,7 +55,7 @@ namespace MyNetwork.Controllers
                     await ImageService.Upload(imgName, bytes);
                 }
             }
-            Review review = new Review() { Name = reviewName, CreationName = creationName, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), AuthorId = userId, ImageUrl = imgName };
+            Review review = new Review() { Name = reviewName, CreationName = creationName, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), AuthorId = CurrentUserSettings.CurrentUser.Id, ImageUrl = imgName };
             db.Reviews.Add(review);
             db.SaveChanges();
             await db.SetTagsToDb(tags, (await db.Reviews.FirstOrDefaultAsync(reviewFromDb => reviewFromDb.Date == review.Date && reviewFromDb.AuthorId == review.AuthorId)).Id);
@@ -66,19 +64,28 @@ namespace MyNetwork.Controllers
 
         public IActionResult BackToMyPage()
         {
-            setAdminSettings();
             return RedirectToAction("MyPage", "MyPage");
         }
 
-        public IActionResult BackToAdminMode()
+        public async Task<IActionResult> BackToAdminMode()
         {
-            setAdminSettings();
+            await setAdminSettingsAsync();
             return RedirectToAction("AdminMode", "MyPage");
         }
 
-        public IActionResult SelectUser(string selectedUser)
+        public async Task<IActionResult> BackToNotAdminMode()
         {
-            if (selectedUser != null) ReviewSettings.CurrentUser = selectedUser;
+            await setAdminSettingsAsync();
+            return RedirectToAction("MyPage", "MyPage");
+        }
+
+        public async Task<IActionResult> SelectUser(string selectedUser)
+        {
+            if (selectedUser != null)
+            {
+                CurrentUserSettings.CurrentUser = await db.FindUserByNameAsync(selectedUser);
+                CurrentUserSettings.AdminMode = TextModel.Context["in admin mode"] + CurrentUserSettings.CurrentUser;
+            }
             return RedirectToAction("MyPage", "MyPage");
         }
 
@@ -89,23 +96,10 @@ namespace MyNetwork.Controllers
             return RedirectToAction("MyPage", "MyPage");
         }
 
-        private async Task checkUserAsync()
+        private async Task setAdminSettingsAsync()
         {
-            if (ReviewSettings.CurrentUser == "")
-            {
-                ReviewSettings.CurrentUser = User.Identity?.Name!;
-                adminMode = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser)).IsAdmin == "No        " ? "not available" : "available";
-            }
-            else if (ReviewSettings.CurrentUser != User.Identity?.Name!)
-            {
-                adminMode = TextModel.Context["in admin mode"] + ReviewSettings.CurrentUser;
-            }
-        }
-
-        private void setAdminSettings()
-        {
-            adminMode = "available";
-            ReviewSettings.CurrentUser = User.Identity?.Name!;
+            CurrentUserSettings.AdminMode = "available";
+            CurrentUserSettings.CurrentUser = await db.FindUserByNameAsync(User.Identity?.Name!);
         }
     }
 }

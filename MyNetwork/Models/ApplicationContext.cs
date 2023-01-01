@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Web;
 
 namespace MyNetwork.Models
@@ -55,15 +54,16 @@ namespace MyNetwork.Models
             return Comments.Where(comment => comment.ReviewId == reviewId).OrderBy(comment => comment.Date).ToList();
         }
 
-        public List<Review> SelectReviewsWithSettings()
+        public List<Review> SelectReviewsWithSettings(string category, string searchType, string tags)
         {
-            var reviewsWithCurrentCategory = ReviewSettings.Category == "all" ? Reviews : Reviews.Where(review => review.Category == ReviewSettings.Category);
-            var resultReviews = ReviewSettings.SearchType == "best views" ?
+            List<string> tagsToList = tags.Split(' ').ToList();
+            var reviewsWithCurrentCategory = category == "all" ? Reviews : Reviews.Where(review => review.Category == category);
+            var resultReviews = searchType == "best views" ?
                 reviewsWithCurrentCategory.OrderByDescending(review => review.Likes).ToList() :
-                ReviewSettings.SearchType == "last views" ?
+                searchType == "last views" ?
                 reviewsWithCurrentCategory.OrderByDescending(review => review.Date).ToList() :
-                ReviewSettings.Tags.Count == 0 ? reviewsWithCurrentCategory.ToList() :
-                getReviewsByTags(reviewsWithCurrentCategory.ToList());
+                tagsToList[0] == "" ? reviewsWithCurrentCategory.ToList() :
+                getReviewsByTags(reviewsWithCurrentCategory.ToList(), tagsToList);
             return resultReviews.Take(resultReviews.Count > 10 ? 10 : resultReviews.Count).ToList();
         }
 
@@ -93,13 +93,13 @@ namespace MyNetwork.Models
             }
         }
 
-        private List<Review> getReviewsByTags(List<Review> reviewsWithCurrentCategory)
+        private List<Review> getReviewsByTags(List<Review> reviewsWithCurrentCategory, List<string> tags)
         {
             List<Review> resultReviews = new List<Review>();
             foreach (var review in reviewsWithCurrentCategory)
             {
                 var reviewTags = SelectReviewTags(review.Id);
-                if (reviewTags.Count != 0 && ReviewSettings.Tags.All(tag => reviewTags.Contains(HttpUtility.UrlDecode(tag)))) resultReviews.Add(review);
+                if (reviewTags.Count != 0 && tags.All(tag => reviewTags.Contains(HttpUtility.UrlDecode(tag)))) resultReviews.Add(review);
             }
             return resultReviews;
         }

@@ -1,7 +1,4 @@
-﻿@using System;
-@using System.Web;
-@using System.IO;
-@using Microsoft.AspNetCore.Identity
+﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 @model ApplicationContext
@@ -11,40 +8,6 @@
 
 <script>
     let color;
-    function getUserRate(rate, id) {
-        let rateNumber = parseFloat(rate);
-        let i;
-        let starRate = '';
-        for (i = 0; i < 5; i++) {
-            if (rateNumber >= i + 1) {
-                starRate += '<i class="bi bi-star-fill"></i>';
-            }
-            else if (rateNumber + 0.5 >= i + 1) {
-                starRate += '<i class="bi bi-star-half"></i>';
-            }
-            else {
-                starRate += '<i class="bi bi-star"></i>';
-            }
-        }
-        document.getElementById(id).insertAdjacentHTML("beforeend", starRate);
-    };
-
-    function changeRate(newRate) {
-        document.getElementById('yourRate').innerHTML = '';
-        getUserRate(newRate, 'yourRate');
-        let stars = document.getElementById('yourRate').querySelectorAll("i");
-        stars.forEach((star, i) => {
-            star.onclick = function () { changeRate(i + 1) };
-        });
-        $.ajax({
-            url: "/Review/ChangeRate",
-            method: 'GET',
-            data: {
-                rate: newRate,
-                creationName: document.getElementById('creationName').innerHTML
-            }
-        });
-    }
 </script>
 
 <div class="row justify-content-md-center">
@@ -52,7 +15,7 @@
 
         @{
             string tableTextColor;
-            if (HttpContextAccessor.HttpContext.Request.Cookies["theme"] == "dark") tableTextColor = "white";
+            if (HttpContextAccessor.HttpContext?.Request.Cookies["theme"] == "dark") tableTextColor = "white";
             else tableTextColor = "dark";
             Review data = Model.Reviews.FirstOrDefault(review => review.Id == (int)ViewData["reviewId"]);
             if (SignInManager.IsSignedIn(User))
@@ -95,31 +58,6 @@
                         </script>
                     </div>
                 </div>
-                <script>
-                    function like() {
-                        let curVal = Number(document.getElementById('likesCount').innerHTML);
-                        let isLike = 0;
-                        if (document.getElementById('heart').style.color == "blue") {
-                            document.getElementById('heart').style.color = "";
-                            curVal--;
-                            document.getElementById('likesCount').innerHTML = curVal
-                        }
-                        else {
-                            document.getElementById('heart').style.color = "blue"
-                            curVal++;
-                            document.getElementById('likesCount').innerHTML = curVal;
-                            isLike = 1;
-                        }
-                        $.ajax({
-                            url: "/Review/LikeReview",
-                            method: 'GET',
-                            data: {
-                                likeCount: curVal,
-                                likeOrDislike: isLike
-                            }
-                        });
-                    }
-                </script>
             }
             else
             {
@@ -129,42 +67,14 @@
                     </div>
                 </div>
             }
-            if (data.ImageUrl != "")
-            {
-                string imgName = data.ImageUrl;
-                byte[] imgBytes = await ImageService.Download(imgName);
-                string str = Convert.ToBase64String(imgBytes);
-                <script>
-                    document.getElementById('likes').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
-                </script>
-            }
-            <p>@TextModel.Context["reviewname"]@data.Name</p>
-            <p>@TextModel.Context["creation review name"]<label id="creationName">@data.CreationName</label></p>
             User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
-            <p>@TextModel.Context["author"]@user.UserName (<i style="color: green">@user.Likes</i>)</p>
-            <p>@TextModel.Context["category"]@TextModel.Context[data.Category]</p>
-            <p>
-                @TextModel.Context["tag"] @foreach (var tag in Model.SelectReviewTags(data.Id))
-                {
-                    <label>@tag </label>
-                }
-            </p>
-            <p>@TextModel.Context["author rate"]@data.AuthorRate</p>
-            <p>@TextModel.Context["users rate"]<label style="color: yellow" id="userRate-@data.Id"></label></p>
-            <script>
-                getUserRate('@data.UsersRate.ToString().Replace(',', '.')', 'userRate-@data.Id');
-            </script>
-            <p>@TextModel.Context["date"]@data.Date.ToShortDateString()</p>
-            <p>@TextModel.Context["description"]</p>
-            <p id="description"></p>
-            <script>
-                let lastCommentId = 0;
-                var str = "@HttpUtility.UrlEncode(data.Description.Replace(" ", "\u00A0"))";
-                str = decodeURI(str);
-                str = str.replaceAll("%2f", "/");
-                str = str.replaceAll("%26nbsp%3b", " ");
-                document.getElementById('description').insertAdjacentHTML("beforeend", str);
-            </script>
+            ViewData.Add("authorName", user.UserName);
+            ViewData.Add("likes", user.Likes);
+            ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(data.Id)));
+            <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
+            ViewData.Remove("authorName");
+            ViewData.Remove("likes");
+            ViewData.Remove("reviewTags");
             <h4>@TextModel.Context["comments"]</h4>
             <table class="table" style="color: @tableTextColor" id="Comments">
                 @foreach (var comment in Model.SelectReviewComments(data.Id))
@@ -190,7 +100,7 @@
                             data: {
                                 currentCommentsCount: document.getElementById('Comments').getElementsByTagName('tr').length,
                                 reviewId: @data.Id
-                                            },
+                                                            },
                             success: function (comment) {
                                 document.getElementById('Comments').insertAdjacentHTML("beforeend", comment);
                             },

@@ -1,34 +1,32 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MyNetwork.Models;
 using System.Diagnostics;
-using System.Text.Encodings.Web;
 using System.Web;
 
 namespace MyNetwork.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private ApplicationContext db;
+        private static string _category = "all";
+        private static string _searchType = "best views";
+        private static List<string> _tags = new List<string>();
 
-        public HomeController(ILogger<HomeController> logger, ApplicationContext db)
+        public HomeController(ApplicationContext db)
         {
-            _logger = logger;
             this.db = db;
             ImageService.setToken(db.AdminDatas.FirstOrDefault(data => data.Name == "token") == null ? "" :
                 db.AdminDatas.FirstOrDefault(data => data.Name == "token").Value);
             TextModel.setContext("en");
-            ReviewSettings.CurrentUser = "";
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            if (Response.HttpContext.Request.Cookies["language"] == "ru") TextModel.setContext("ru");
-            else TextModel.setContext("en");
+            await setParamsAsync();
             ViewData.Model = db;
-            ViewData.Add("category", ReviewSettings.Category);
-            ViewData.Add("searchType", ReviewSettings.SearchType);
-            ViewData.Add("tags", string.Join(' ', ReviewSettings.Tags));
+            ViewData.Add("category", _category);
+            ViewData.Add("searchType", _searchType);
+            ViewData.Add("tags", string.Join(' ', _tags));
             ViewData.Add("popular tags", string.Join(' ', db.SelectPopularTags()));
             return View();
         }
@@ -76,11 +74,29 @@ namespace MyNetwork.Controllers
 
         public IActionResult ChangeReviewParameters(string category, string searchTupe, string[]? tags = null)
         {
-            ReviewSettings.Category = category;
-            ReviewSettings.SearchType = searchTupe;
-            if (searchTupe == "tags" && tags != null) ReviewSettings.Tags = tags.Skip(1).Distinct().Select(tag => HttpUtility.UrlEncode(tag)).ToList();
-            else ReviewSettings.Tags = new List<string>();
+            _category = category;
+           _searchType = searchTupe;
+            if (searchTupe == "tags" && tags != null) _tags = tags.Skip(1).Distinct().Select(tag => HttpUtility.UrlEncode(tag)).ToList();
+            else _tags = new List<string>();
             return RedirectToAction("Index", "Home");
+        }
+
+        private async Task setParamsAsync()
+        {
+            if (Response.HttpContext.Request.Cookies["language"] == null)
+            {
+                if (Response.HttpContext.Request.Cookies["language"] == "ru") TextModel.setContext("ru");
+                else TextModel.setContext("en");
+            }
+            if (CurrentUserSettings.CurrentUser.UserName == null)
+            {
+                CurrentUserSettings.CurrentUser = User.Identity?.Name! == null ? new User() : await db.FindUserByNameAsync(User.Identity?.Name!);
+            }
+            else if (User.Identity?.Name! == null)
+            {
+                CurrentUserSettings.CurrentUser = new User();
+                CurrentUserSettings.AdminMode = "";
+            }
         }
     }
 }

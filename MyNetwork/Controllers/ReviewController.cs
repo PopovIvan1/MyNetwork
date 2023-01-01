@@ -14,13 +14,13 @@ namespace MyNetwork.Controllers
             this.db = db;
         }
 
-        public async Task<IActionResult> ReviewPage(string review)
+        public IActionResult ReviewPage(string review)
         {
             currentReviewId = int.Parse(review);
             ViewData.Add("reviewId", currentReviewId);
-            if (User.Identity.IsAuthenticated) 
-            { 
-                ViewData.Add("userId", (await db.FindUserByNameAsync(User.Identity.Name)).Id); 
+            if (User.Identity.IsAuthenticated)
+            {
+                ViewData.Add("userId", CurrentUserSettings.CurrentUser.Id);
             }
             ViewData.Model = db;
             return View();
@@ -73,11 +73,9 @@ namespace MyNetwork.Controllers
             return RedirectToAction("MyPage", "MyPage");
         }
 
-        public async Task<IActionResult> NewComment(string commentContext)
+        public IActionResult NewComment(string commentContext)
         {
-            if (ReviewSettings.CurrentUser == "") ReviewSettings.CurrentUser = User.Identity?.Name!;
-            User user = await db.FindUserByNameAsync(ReviewSettings.CurrentUser);
-            db.Comments.Add(new Comment { ReviewId = currentReviewId, Context = commentContext, Date = DateTime.Now, UserId = user.Id, UserName = ReviewSettings.CurrentUser, UserLikes = user.Likes });
+            db.Comments.Add(new Comment { ReviewId = currentReviewId, Context = commentContext, Date = DateTime.Now, UserId = CurrentUserSettings.CurrentUser.Id, UserName = CurrentUserSettings.CurrentUser.UserName, UserLikes = CurrentUserSettings.CurrentUser.Likes });
             db.SaveChanges();
             return RedirectToAction("ReviewPage", "Review", new { review = currentReviewId.ToString() });
         }
@@ -94,25 +92,23 @@ namespace MyNetwork.Controllers
 
         public async Task LikeReview(int likeCount, int likeOrDislike)
         {
-            string userId = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser == "" ? User.Identity.Name: ReviewSettings.CurrentUser)).Id;
             if (likeOrDislike == 1)
             {
-                db.Likes.Add(new Like { ReviewId = currentReviewId, UserId = userId });
+                db.Likes.Add(new Like { ReviewId = currentReviewId, UserId = CurrentUserSettings.CurrentUser.Id });
                 (await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId)).Likes++;
             }
             else
             {
-                db.Likes.Remove(await db.Likes.FirstOrDefaultAsync(like => like.UserId == userId && like.ReviewId == currentReviewId));
+                db.Likes.Remove(await db.Likes.FirstOrDefaultAsync(like => like.UserId == CurrentUserSettings.CurrentUser.Id && like.ReviewId == currentReviewId));
                 (await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId)).Likes--;
             }
             db.SaveChanges();
         }
 
-        public async Task ChangeRate(int rate, string creationName)
+        public async Task ChangeCreationRate(int rate, string creationName)
         {
-            string userId = (await db.FindUserByNameAsync(ReviewSettings.CurrentUser == "" ? User.Identity.Name : ReviewSettings.CurrentUser)).Id;
-            Rate currentRate = await db.Rates.FirstOrDefaultAsync(rate => rate.UserId == userId && rate.ReviewId == currentReviewId);
-            if (currentRate == null) db.Rates.Add(new Rate { UserRate = rate, ReviewId = currentReviewId, UserId = userId, CreationName = creationName });
+            Rate currentRate = await db.Rates.FirstOrDefaultAsync(rate => rate.UserId == CurrentUserSettings.CurrentUser.Id && rate.ReviewId == currentReviewId);
+            if (currentRate == null) db.Rates.Add(new Rate { UserRate = rate, ReviewId = currentReviewId, UserId = CurrentUserSettings.CurrentUser.Id, CreationName = creationName });
             else currentRate.UserRate = rate;
             db.SaveChanges();
         }

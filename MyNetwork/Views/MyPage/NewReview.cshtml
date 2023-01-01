@@ -81,9 +81,8 @@
         </section>
     </div>
 </div>
-<!-- suneditor -->
+
 <link href="~/suneditor/dist/css/suneditor.min.css" rel="stylesheet">
-<!-- suneditor -->
 <script src="~/suneditor/dist/suneditor.min.js"></script>
 <script>
     var suneditor = SUNEDITOR.create('editor', {
@@ -100,29 +99,4 @@
             ['codeView']
         ]
     });
-</script>
-
-<script>
-    function addTagLabel() {
-        let isEmptyTags = 0;
-        let tags = document.querySelectorAll("#tagContent");
-        tags.forEach((item, index) => {
-            if (item.querySelector("#tag").value == "") isEmptyTags += 1;
-            if (isEmptyTags > 1 && item.querySelector("#tag").value == "") item.remove();
-        });
-        if (isEmptyTags == 0) {
-            let parent = document.getElementById('tags');
-            let elem = parent.querySelector('.form-floating');
-
-            let clone = elem.cloneNode(true);
-            parent.appendChild(clone);
-            document.getElementById('tag').value = "";
-        }
-    }
-
-    function checkNumber() {
-        if (document.getElementById('number').value > 10) {
-            document.getElementById('number').value = 10;
-        }
-    }
 </script>
