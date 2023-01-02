@@ -15,9 +15,6 @@ namespace MyNetwork.Controllers
         public HomeController(ApplicationContext db)
         {
             this.db = db;
-            ImageService.setToken(db.AdminDatas.FirstOrDefault(data => data.Name == "token") == null ? "" :
-                db.AdminDatas.FirstOrDefault(data => data.Name == "token").Value);
-            TextModel.setContext("en");
         }
 
         public async Task<IActionResult> Index()
@@ -52,7 +49,6 @@ namespace MyNetwork.Controllers
             {
                 Response.Cookies.Append("theme", "light");
             }
-
             return RedirectToAction("Index", "Home");
         }
 
@@ -66,9 +62,7 @@ namespace MyNetwork.Controllers
             {
                 Response.Cookies.Append("language", "ru");
             }
-
             TextModel.setContext(language);
-
             return RedirectToAction("Index", "Home");
         }
 
@@ -81,21 +75,38 @@ namespace MyNetwork.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        public IActionResult FullTextSearch(string searchString)
+        {
+            ViewData.Model = db;
+            ViewData.Add("searchString", searchString == null ? "" : searchString);
+            return View();
+        }
+
         private async Task setParamsAsync()
         {
+            if (ImageService.getToken() == "")
+            {
+                ImageService.setToken(db.AdminDatas.FirstOrDefault(data => data.Name == "token") == null ? "" : 
+                    db.AdminDatas.FirstOrDefault(data => data.Name == "token").Value);
+            }
             if (Response.HttpContext.Request.Cookies["language"] == null)
             {
                 if (Response.HttpContext.Request.Cookies["language"] == "ru") TextModel.setContext("ru");
                 else TextModel.setContext("en");
             }
-            if (CurrentUserSettings.CurrentUser.UserName == null)
-            {
-                CurrentUserSettings.CurrentUser = User.Identity?.Name! == null ? new User() : await db.FindUserByNameAsync(User.Identity?.Name!);
-            }
-            else if (User.Identity?.Name! == null)
+            await setUserSettings();
+        }
+
+        private async Task setUserSettings()
+        {
+            if (User.Identity?.Name! == null)
             {
                 CurrentUserSettings.CurrentUser = new User();
                 CurrentUserSettings.AdminMode = "";
+            }
+            else if (CurrentUserSettings.CurrentUser.UserName == null)
+            {
+                CurrentUserSettings.CurrentUser = await db.FindUserByNameAsync(User.Identity?.Name!);
             }
         }
     }

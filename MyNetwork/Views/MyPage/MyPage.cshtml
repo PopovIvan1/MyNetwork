@@ -11,7 +11,9 @@
     @{
         int userLikes = (await ViewData.Model.FindUserByNameAsync(ViewData["username"]?.ToString())).Likes;
     }
-    <div style="float: right">@TextModel.Context["your likes"] @userLikes</div>
+    <script>
+        document.getElementById('searchForm').insertAdjacentHTML("beforeend", '<p><div style="float: right">@TextModel.Context["your likes"] @userLikes</div></p>');
+    </script>
     <h1 class="display-4">@TextModel.Context["my page"]</h1>
 </div>
 <div class="row">
@@ -76,11 +78,6 @@
             </td>
             <td id="@data.Id" align="left" style="width: 80%">
                 @{
-                    <div class="wrapper" style="width: 30%; float: right;" id="likes-@data.Id">
-                        <div style="float: right;">
-                            <p>@TextModel.Context["likes"]@data.Likes</p>
-                        </div>
-                    </div>
                     User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
                     ViewData.Add("authorName", user.UserName);
                     ViewData.Add("likes", user.Likes);

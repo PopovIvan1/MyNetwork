@@ -4,8 +4,6 @@
 @model ApplicationContext
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
-
 <script>
     let color;
 </script>
@@ -18,8 +16,19 @@
             if (HttpContextAccessor.HttpContext?.Request.Cookies["theme"] == "dark") tableTextColor = "white";
             else tableTextColor = "dark";
             Review data = Model.Reviews.FirstOrDefault(review => review.Id == (int)ViewData["reviewId"]);
+            User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
+            ViewData.Add("authorName", user.UserName);
+            ViewData.Add("likes", user.Likes);
+            ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(data.Id)));
+            <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
+            ViewData.Remove("authorName");
+            ViewData.Remove("likes");
+            ViewData.Remove("reviewTags");
             if (SignInManager.IsSignedIn(User))
             {
+                <script>
+                    document.getElementById('likes-@data.Id').innerHTML = '';
+                </script>
                 if (Model.Likes.FirstOrDefault(like => like.UserId == ViewData["userId"] && like.ReviewId == data.Id) != null)
                 {
                     <script>
@@ -36,45 +45,18 @@
                 int userRate = 0;
                 if (rate != null)
                 {
-                    userRate = @rate.UserRate;
+                    userRate = rate.UserRate;
                 }
-                <div class="wrapper" style="width: 30%; float: right;" id="likes-@data.Id">
-                    <div style="float: right" id="likes">
-                        <p>
-                            <i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label>
-                        </p>
-                        <script>
-                            document.getElementById('heart').style.color = color;
-                        </script>
-                        <p></p>
-                        @TextModel.Context["your rate"]:
-                        <label style="color: yellow" id="yourRate"></label>
-                        <script>
-                            getUserRate('@userRate.ToString()', 'yourRate');
-                            let stars = document.getElementById('yourRate').querySelectorAll("i");
-                            stars.forEach((star, i) => {
-                                star.onclick = function () { changeRate(i + 1) };
-                            })
-                        </script>
-                    </div>
-                </div>
+                <script>
+                    document.getElementById('likes-@data.Id').insertAdjacentHTML("afterbegin", '<div style="float: right" id="likes"><p><i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label></p><p></p>@TextModel.Context["your rate"]:<label style="color: yellow" id="yourRate"></label></div>');
+                    getUserRate('@userRate.ToString()', 'yourRate');
+                    let stars = document.getElementById('yourRate').querySelectorAll("i");
+                    stars.forEach((star, i) => {
+                        star.onclick = function () { changeRate(i + 1) };
+                    })
+                    document.getElementById('heart').style.color = color;
+                </script>
             }
-            else
-            {
-                <div class="wrapper" style="width: 30%; float: right;" id="likes-@data.Id">
-                    <div style="float: right" id="likes">
-                        @TextModel.Context["likes"]@data.Likes
-                    </div>
-                </div>
-            }
-            User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
-            ViewData.Add("authorName", user.UserName);
-            ViewData.Add("likes", user.Likes);
-            ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(data.Id)));
-            <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
-            ViewData.Remove("authorName");
-            ViewData.Remove("likes");
-            ViewData.Remove("reviewTags");
             <h4>@TextModel.Context["comments"]</h4>
             <table class="table" style="color: @tableTextColor" id="Comments">
                 @foreach (var comment in Model.SelectReviewComments(data.Id))
@@ -100,7 +82,7 @@
                             data: {
                                 currentCommentsCount: document.getElementById('Comments').getElementsByTagName('tr').length,
                                 reviewId: @data.Id
-                                                            },
+                                                                                            },
                             success: function (comment) {
                                 document.getElementById('Comments').insertAdjacentHTML("beforeend", comment);
                             },
@@ -128,4 +110,33 @@
             }
         }
     </div>
+    @{
+        List<Review> sameReviews = Model.Reviews.Where(review => review.CreationName == data.CreationName && review.Id != data.Id).ToList();
+        if (sameReviews.Count != 0)
+        {
+            <h3>@TextModel.Context["same reviews"]</h3>
+            <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">
+                <table class="table" style="border-style: solid; border-color: red; color: @tableTextColor; ">
+                    @foreach (var review in sameReviews)
+                    {
+                        <tr>
+                            <td><button type="submit" class="btn btn-primary" name="review" value="@review.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
+                            <td id="@review.Id" align="left" style="width: 80%">
+                                @{
+                                    user = await ViewData.Model.GetUserByIdAsync(review.AuthorId.ToString());
+                                    ViewData.Add("authorName", user.UserName);
+                                    ViewData.Add("likes", user.Likes);
+                                    ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(review.Id)));
+                                    <partial name="../Review/ReviewData" model="review" view-data="ViewData" />
+                                    ViewData.Remove("authorName");
+                                    ViewData.Remove("likes");
+                                    ViewData.Remove("reviewTags");
+                                }
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </form>
+        }
+    }
 </div>

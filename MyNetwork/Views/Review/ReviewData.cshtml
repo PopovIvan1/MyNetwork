@@ -2,27 +2,38 @@
 @using System.Web;
 @using System.IO;
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
 
 @{
+    <div class="wrapper" style="width: 30%; float: right;" id="likes-@Model.Id">
+        <div style="float: right" id="likes">
+            @TextModel.Context["likes"]@Model.Likes
+        </div>
+    </div>
     if (Model.ImageUrl != "")
     {
-        string imgName = Model.ImageUrl;
-        byte[] imgBytes = await ImageService.Download(imgName);
-        string str = Convert.ToBase64String(imgBytes);
         <script>
-            document.getElementById('likes-@Model.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+            setTimeout(function () {
+                @{
+                    string imgName = Model.ImageUrl;
+                    byte[] imgBytes = await ImageService.Download(imgName);
+                    string str = Convert.ToBase64String(imgBytes);
+                }
+                document.getElementById('likes-@Model.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+            }, 200);
         </script>
     }
+
     <p>@TextModel.Context["reviewname"]@Model.Name</p>
     <p>@TextModel.Context["creation review name"]<label id="creationName">@Model.CreationName</label></p>
     <p>@TextModel.Context["author"]@ViewData["authorName"] (<i style="color: green">@ViewData["likes"]</i>)</p>
     <p>@TextModel.Context["category"]@TextModel.Context[Model.Category]</p>
     <p>@TextModel.Context["tag"] <label>@ViewData["reviewTags"]</label></p>
     <p>@TextModel.Context["author rate"]@Model.AuthorRate</p>
+    <p>@TextModel.Context["creation rate"]<label style="color: yellow" id="creationRate-@Model.Id"></label></p>
     <p>@TextModel.Context["users rate"]<label style="color: yellow" id="userRate-@Model.Id"></label></p>
     <script>
-        getUserRate('@Model.UsersRate.ToString().Replace(',', '.')', 'userRate-@Model.Id');
+        getUserRate('@Model.UsersRate.ToString().Replace(',', '.')', 'creationRate-@Model.Id');
+        getUserRate('@Model.UsersReviewRate.ToString().Replace(',', '.')', 'userRate-@Model.Id');
     </script>
     <p>@TextModel.Context["date"]@Model.Date.ToShortDateString()</p>
     <p>@TextModel.Context["description"]</p>

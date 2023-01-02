@@ -13,6 +13,7 @@ namespace MyNetwork.Models
         public string AuthorId { get; set; } = string.Empty!;
         public string ImageUrl { get; set; } = string.Empty!;
         public float UsersRate { get; set; } = 0!;
+        public float UsersReviewRate { get; set; } = 0!;
         public DateTime Date { get; set; } = DateTime.Now!;
         public int Likes { get; set; } = 0!;
     }

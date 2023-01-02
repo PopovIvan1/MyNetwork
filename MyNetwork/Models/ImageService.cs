@@ -27,6 +27,11 @@ namespace MyNetwork.Models
             dbx = new DropboxClient(token);
         }
 
+        public static string getToken()
+        { 
+            return token; 
+        }
+
         public static async Task<byte[]> Download(string file)
         {
             using (var response = await dbx.Files.DownloadAsync("/" + folder + "/" + file))

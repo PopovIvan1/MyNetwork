@@ -7,8 +7,6 @@
     ViewData["Title"] = "Home Page";
 }
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
-
 <div class="text-center">
     <h1 class="display-4">@TextModel.Context["main"]</h1>
 </div>
@@ -90,11 +88,6 @@
                     <td><button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
                     <td id="@data.Id" align="left" style="width: 80%">
                         @{
-                            <div class="wrapper" style="width: 30%; float: right;" id="likes-@data.Id">
-                                <div style="float: right;">
-                                    <p>@TextModel.Context["likes"]@data.Likes</p>
-                                </div>
-                            </div>
                             User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
                             ViewData.Add("authorName", user.UserName);
                             ViewData.Add("likes", user.Likes);

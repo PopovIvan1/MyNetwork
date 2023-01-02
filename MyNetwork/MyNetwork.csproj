@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dropbox.Api" Version="6.36.0" />
+    <PackageReference Include="Korzh.EasyQuery.Linq" Version="7.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="6.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Twitter" Version="6.0.0" />

@@ -109,6 +109,10 @@
             <p></p>
         }
     }
+    <form style="float: right" asp-controller="Home" asp-action="FullTextSearch" class="form-horizontal" id="searchForm">
+        <input type="search" name="searchString" id="searchInput">
+        <input type="submit" value=@TextModel.Context["search"]>
+    </form>
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
