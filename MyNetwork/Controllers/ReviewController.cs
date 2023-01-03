@@ -48,28 +48,18 @@ namespace MyNetwork.Controllers
         public async Task<IActionResult> UpdateReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image)
         {
             await db.RemoveTags(currentReviewId);
-            db.SaveChanges();
             Review currentReview = await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId);
-            string imgName = "";
-            if (image != null && image.ContentType.Contains("image"))
-            {
-                ImageService.Remove(currentReview.ImageUrl);
-                imgName = DateTime.Now.ToString().Replace('.', '-').Replace(' ', '-').Replace(':', '-').Replace('/', '-') + '.' + image.FileName.Split('.').Last();
-                using (var fileStream = image.OpenReadStream())
-                {
-                    byte[] bytes = new byte[image.Length];
-                    fileStream.Read(bytes, 0, (int)image.Length);
-                    await ImageService.Upload(imgName, bytes);
-                }
-                currentReview.ImageUrl = imgName;
-            }
-            currentReview.Name = reviewName;
+            string imgName = await ImageService.GetImageName(image);
+            if (!string.IsNullOrEmpty(imgName)) currentReview.ImageUrl = imgName;
+            string oldCreationName = currentReview.CreationName;
             currentReview.CreationName = creationName;
+            currentReview.Name = reviewName;
             currentReview.Category = category;
             currentReview.Description = description;
             currentReview.AuthorRate= int.Parse(rate);
             db.SaveChanges();
             await db.SetTagsToDb(tags, currentReviewId);
+            if (oldCreationName != creationName) db.UpdateRates(currentReviewId, creationName, oldCreationName);
             return RedirectToAction("MyPage", "MyPage");
         }
 

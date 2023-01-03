@@ -34,7 +34,7 @@ namespace MyNetwork.Models
             var userReviews = category == "all" ? Reviews.Where(review => review.AuthorId == userId).ToList()
                 : Reviews.Where(review => review.AuthorId == userId && review.Category == category).ToList();
             return sortOrder == "date" ? userReviews.OrderByDescending(review => review.Date).ToList()
-                : sortOrder == "popular" ? userReviews.OrderByDescending(review => review.Likes).ToList() : userReviews;
+                : sortOrder == "popular" ? userReviews.OrderByDescending(review => review.UsersReviewRate).ToList() : userReviews;
         }
 
         public async Task<User> GetUserByIdAsync(string userId)
@@ -59,7 +59,7 @@ namespace MyNetwork.Models
             List<string> tagsToList = tags.Split(' ').ToList();
             var reviewsWithCurrentCategory = category == "all" ? Reviews : Reviews.Where(review => review.Category == category);
             var resultReviews = searchType == "best views" ?
-                reviewsWithCurrentCategory.OrderByDescending(review => review.Likes).ToList() :
+                reviewsWithCurrentCategory.OrderByDescending(review => review.UsersReviewRate).ToList() :
                 searchType == "last views" ?
                 reviewsWithCurrentCategory.OrderByDescending(review => review.Date).ToList() :
                 tagsToList[0] == "" ? reviewsWithCurrentCategory.ToList() :
@@ -80,6 +80,27 @@ namespace MyNetwork.Models
             SaveChanges();
         }
 
+        public async Task RemoveUser(User user)
+        {
+            await Comments.Where(comment => comment.UserName == user.UserName).ForEachAsync(comment => Comments.Remove(comment));
+            await Likes.Where(like => like.UserId == user.Id).ForEachAsync(like => Likes.Remove(like));
+            await Rates.Where(rate => rate.UserId == user.Id).ForEachAsync(rate => Rates.Remove(rate));
+            SaveChanges();
+            AspNetUsers.Remove(user);
+            SaveChanges();
+        }
+
+        public void UpdateRates(int reviewId, string newCreationName, string oldCreationName)
+        {
+            Rates.Where(rate => rate.ReviewId == reviewId).ToList().ForEach(rate => rate.CreationName = newCreationName);
+            SaveChanges();
+            Rate newRate = new Rate() { CreationName = oldCreationName, ReviewId = reviewId, UserId = CurrentUserSettings.CurrentUser.Id };
+            Rates.Add(newRate);
+            SaveChanges();
+            Rates.Remove(newRate);
+            SaveChanges();
+        }
+
         public async Task RemoveTags(int reviewId)
         {
             var currentReviewTags = ReviewTags.Where(tag => tag.ReviewId == reviewId).ToList();
@@ -91,6 +112,7 @@ namespace MyNetwork.Models
                 else tag.ReviewsCount--;
                 SaveChanges();
             }
+            SaveChanges();
         }
 
         private List<Review> getReviewsByTags(List<Review> reviewsWithCurrentCategory, List<string> tags)

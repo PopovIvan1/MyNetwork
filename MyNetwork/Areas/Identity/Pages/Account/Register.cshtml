@@ -9,6 +9,7 @@
         <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
             <h2>@TextModel.Context["create new account"]</h2>
             <hr />
+            <label id="labelForErrors"></label>
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-floating" style="color:black">
                 <input asp-for="Input.Username" class="form-control" autocomplete="username" aria-required="true" />
@@ -23,7 +24,7 @@
                 <label asp-for="Input.Password">@TextModel.Context["password"]</label>
             </div>
             <div class="form-floating" style="color:black">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" />
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true"/>
                 <label asp-for="Input.ConfirmPassword">@TextModel.Context["confirm password"]</label>
             </div>
             <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">@TextModel.Context["register"]</button>

@@ -1,6 +1,5 @@
 ﻿using Dropbox.Api;
 using Dropbox.Api.Files;
-using System.Text;
 
 namespace MyNetwork.Models
 {
@@ -43,6 +42,22 @@ namespace MyNetwork.Models
         public static async Task Remove(string file)
         {
             await dbx.Files.DeleteV2Async("/" + folder + "/" + file);
+        }
+
+        public static async Task<string> GetImageName(IFormFile image)
+        {
+            string imgName = "";
+            if (image != null && image.ContentType.Contains("image"))
+            {
+                imgName = DateTime.Now.ToString().Replace('.', '-').Replace(' ', '-').Replace(':', '-').Replace('/', '-') + '.' + image.FileName.Split('.').Last();
+                using (var fileStream = image.OpenReadStream())
+                {
+                    byte[] bytes = new byte[image.Length];
+                    fileStream.Read(bytes, 0, (int)image.Length);
+                    await Upload(imgName, bytes);
+                }
+            }
+            return imgName;
         }
     }
 }

@@ -12,22 +12,37 @@
     else tableTextColor = "dark";
 }
 <h2>@TextModel.Context["list of users"]</h2>
-<form asp-controller="MyPage" asp-action="SelectUser" class="form-horizontal">
-    <table class="table" style="color: @tableTextColor">
+<table class="table" style="color: @tableTextColor">
+    <tr>
+        <th></th>
+        <th>Id</th>
+        <th>@TextModel.Context["name"]</th>
+        <th>@TextModel.Context["email"]</th>
+    </tr>
+    @foreach (var data in ViewData.Model)
+    {
+        if (data.IsAdmin != "No        ") continue;
         <tr>
-            <th></th>
-            <th>Id</th>
-            <th>@TextModel.Context["name"]</th>
-            <th>@TextModel.Context["email"]</th>
+            <td>
+                <form asp-controller="MyPage" asp-action="SelectUser" class="form-horizontal">
+                    <button type="submit" class="btn btn-primary" name="selectedUser" value="@data.UserName"><i class="bi bi-pen"></i> @TextModel.Context["edit"]</button>
+                </form>
+                <p></p>
+                <form asp-controller="MyPage" asp-action="DeleteProfile" class="form-horizontal">
+                    <button type="submit" class="btn btn-danger" name="userId" value="@data.Id"><i class="bi bi-trash"></i>@TextModel.Context["remove"]</button>
+                </form>
+                <p></p>
+                <form asp-controller="MyPage" asp-action="BlockUser" class="form-horizontal">
+                    <button type="submit" class="btn btn-primary" name="userId" value="@data.Id">@TextModel.Context["block user"]</button>
+                </form>
+                <p></p>
+                <form asp-controller="MyPage" asp-action="MakeAdmin" class="form-horizontal">
+                    <button type="submit" class="btn btn-primary" name="userId" value="@data.Id">@TextModel.Context["make admin"]</button>
+                </form>
+            </td>
+            <td>@data.Id</td>
+            <td>@data.UserName</td>
+            <td>@data.Email</td>
         </tr>
-        @foreach (var data in ViewData.Model)
-        {
-            <tr>
-                <td><button type="submit" class="btn btn-primary" name="selectedUser" value="@data.UserName"><i class="bi bi-pen"></i> @TextModel.Context["edit"]</button></td>
-                <td>@data.Id</td>
-                <td>@data.UserName</td>
-                <td>@data.Email</td>
-            </tr>
-        }
-    </table>
-</form>
+    }
+</table>

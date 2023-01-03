@@ -1,9 +1,7 @@
-﻿using Dropbox.Api.TeamLog;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MyNetwork.Data;
 using MyNetwork.Models;
-using System.Web;
 
 
 namespace MyNetwork.Controllers
@@ -13,9 +11,11 @@ namespace MyNetwork.Controllers
         private ApplicationContext db;
         private static string category = "all";
         private static string sortOrder = "no sort";
+        private readonly SignInManager<IdentityUser> _signInManager;
 
-        public MyPageController(ApplicationContext db)
+        public MyPageController(ApplicationContext db, SignInManager<IdentityUser> signInManager)
         {
+            _signInManager = signInManager;
             this.db = db;
         }
 
@@ -44,17 +44,7 @@ namespace MyNetwork.Controllers
         public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image)
         {
             if (description.Contains(TextModel.Context["typing description"])) description = "";
-            string imgName = "";
-            if (image != null && image.ContentType.Contains("image"))
-            {
-                imgName = DateTime.Now.ToString().Replace('.', '-').Replace(' ', '-').Replace(':', '-').Replace('/', '-') + '.' + image.FileName.Split('.').Last();
-                using (var fileStream = image.OpenReadStream())
-                {
-                    byte[] bytes = new byte[image.Length];
-                    fileStream.Read(bytes, 0, (int)image.Length);
-                    await ImageService.Upload(imgName, bytes);
-                }
-            }
+            string imgName = await ImageService.GetImageName(image);
             Review review = new Review() { Name = reviewName, CreationName = creationName, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), AuthorId = CurrentUserSettings.CurrentUser.Id, ImageUrl = imgName };
             db.Reviews.Add(review);
             db.SaveChanges();
@@ -94,6 +84,47 @@ namespace MyNetwork.Controllers
             category = categoryFromView;
             sortOrder = sortOrderFromView;
             return RedirectToAction("MyPage", "MyPage");
+        }
+
+        public async Task<IActionResult> DeleteProfile(string userId = "")
+        {
+            User currentUser;
+            if (!string.IsNullOrEmpty(userId)) currentUser = await db.GetUserByIdAsync(userId);
+            else currentUser = CurrentUserSettings.CurrentUser;
+            await checkAdminMode(currentUser);
+            await db.RemoveUser(currentUser);
+            return RedirectToAction("Index", "Home");
+        }
+
+        public async Task<IActionResult> MakeAdmin(string userId)
+        {
+            (await db.GetUserByIdAsync(userId)).IsAdmin = "admin";
+            db.SaveChanges();
+            return RedirectToAction("AdminMode", "MyPage");
+        }
+
+        /*public async Task<IActionResult> BlockUser(string userId)
+        {
+            User currentUser;
+            if (!string.IsNullOrEmpty(userId)) currentUser = await db.GetUserByIdAsync(userId);
+            else currentUser = CurrentUserSettings.CurrentUser;
+            await checkAdminMode(currentUser);
+            await db.RemoveUser(currentUser);
+            return RedirectToAction("Index", "Home");
+        }*/
+
+        private async Task checkAdminMode(User currentUser)
+        {
+            if (currentUser.UserName == User?.Identity!.Name)
+            {
+                await _signInManager.SignOutAsync();
+                CurrentUserSettings.CurrentUser = new User();
+                CurrentUserSettings.AdminMode = "";
+            }
+            else
+            {
+                await setAdminSettingsAsync();
+            }
         }
 
         private async Task setAdminSettingsAsync()

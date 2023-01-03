@@ -23,6 +23,12 @@
         </form>
         <p></p>
     </div>
+    <div class="col-md-2" style="float: right">
+        <form asp-controller="MyPage" asp-action="DeleteProfile" class="form-horizontal">
+            <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i>@TextModel.Context["delete profile"]</button>
+        </form>
+        <p></p>
+    </div>
     @{
         if (CurrentUserSettings.AdminMode == "available")
         {

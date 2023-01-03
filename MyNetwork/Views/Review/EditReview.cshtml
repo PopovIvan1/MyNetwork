@@ -1,4 +1,7 @@
 ﻿@model ApplicationContext
+@using System;
+@using System.Web;
+@using System.IO;
 
 @{
     Review data = Model.Reviews.FirstOrDefault(review => review.Id == (int)ViewData["reviewId"]);
@@ -68,7 +71,10 @@
                     @foreach (var tag in ViewData.Model.SelectReviewTags(data.Id))
                     {
                         <script>
-                            document.getElementById('tag').value = "@tag";
+                            var str = "@HttpUtility.UrlEncode(tag.Replace(" ", "\u00A0"))";
+                            str = decodeURI(str);
+                            str = str.replaceAll("%2f", "/").replaceAll("%26nbsp%3b", " ");
+                            document.getElementById('tag').value = str;
                             addTagLabel();
                         </script>
                     }

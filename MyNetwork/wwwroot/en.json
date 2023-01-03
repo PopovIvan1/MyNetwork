@@ -81,5 +81,9 @@
   "your likes": "Your likes: ",
   "likes": "Likes: ",
   "creation rate": "Creation rate: ",
-  "same reviews": "Same reviews:"
+  "same reviews": "Same reviews:",
+  "delete profile": "Delete profile",
+  "correct data": "Please, enter correct details.",
+  "block user": "Block user",
+  "make admin": "Make admin"
 }
