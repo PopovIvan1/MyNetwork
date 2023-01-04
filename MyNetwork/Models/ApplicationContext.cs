@@ -46,7 +46,7 @@ namespace MyNetwork.Models
         {
             return Tags.Where(tag => 
             ReviewTags.Where(reviewTag => reviewTag.ReviewId == reviewId).Select(reviewTag => reviewTag.TagId)
-            .Contains(tag.Id)).Select(tag => tag.Name).ToList();
+            .Contains(tag.Id)).ToList().Select(tag => tag.Name).ToList();
         }
 
         public List<Comment> SelectReviewComments(int reviewId)
@@ -86,6 +86,7 @@ namespace MyNetwork.Models
             await Likes.Where(like => like.UserId == user.Id).ForEachAsync(like => Likes.Remove(like));
             await Rates.Where(rate => rate.UserId == user.Id).ForEachAsync(rate => Rates.Remove(rate));
             SaveChanges();
+            await removeUserReviews(user.Id);
             AspNetUsers.Remove(user);
             SaveChanges();
         }
@@ -124,6 +125,17 @@ namespace MyNetwork.Models
                 if (reviewTags.Count != 0 && tags.All(tag => reviewTags.Contains(HttpUtility.UrlDecode(tag)))) resultReviews.Add(review);
             }
             return resultReviews;
+        }
+
+        private async Task removeUserReviews(string userId)
+        {
+            foreach (var review in Reviews.Where(review => review.AuthorId == userId).ToList())
+            {
+                await RemoveTags(review.Id);
+                await ImageService.Remove(review.ImageUrl);
+                await Rates.Where(rate => rate.ReviewId == review.Id).ForEachAsync(rate => Rates.Remove(rate));
+            }
+            SaveChanges();
         }
     }
 }

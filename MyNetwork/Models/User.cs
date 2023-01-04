@@ -6,5 +6,6 @@ namespace MyNetwork.Models
     {
         public string IsAdmin { get; set; } = string.Empty!;
         public int Likes { get; set; } = 0!;
+        public string IsBlock { get; set; } = "No";
     }
 }

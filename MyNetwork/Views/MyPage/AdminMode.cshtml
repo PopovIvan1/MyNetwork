@@ -21,24 +21,36 @@
     </tr>
     @foreach (var data in ViewData.Model)
     {
-        if (data.IsAdmin != "No        ") continue;
         <tr>
             <td>
-                <form asp-controller="MyPage" asp-action="SelectUser" class="form-horizontal">
-                    <button type="submit" class="btn btn-primary" name="selectedUser" value="@data.UserName"><i class="bi bi-pen"></i> @TextModel.Context["edit"]</button>
-                </form>
-                <p></p>
-                <form asp-controller="MyPage" asp-action="DeleteProfile" class="form-horizontal">
-                    <button type="submit" class="btn btn-danger" name="userId" value="@data.Id"><i class="bi bi-trash"></i>@TextModel.Context["remove"]</button>
-                </form>
-                <p></p>
-                <form asp-controller="MyPage" asp-action="BlockUser" class="form-horizontal">
-                    <button type="submit" class="btn btn-primary" name="userId" value="@data.Id">@TextModel.Context["block user"]</button>
-                </form>
-                <p></p>
-                <form asp-controller="MyPage" asp-action="MakeAdmin" class="form-horizontal">
-                    <button type="submit" class="btn btn-primary" name="userId" value="@data.Id">@TextModel.Context["make admin"]</button>
-                </form>
+                @{
+                    if (data.IsAdmin != "No        ")
+                    {
+                        <label style="color: gray">@TextModel.Context["admin"]</label>
+                    }
+                    else
+                    {
+                        string blockText = "";
+                        if (data.IsBlock == "block") blockText = TextModel.Context["unblock user"];
+                        else blockText = TextModel.Context["block user"];
+                        <form asp-controller="MyPage" asp-action="SelectUser" class="form-horizontal">
+                            <button type="submit" class="btn btn-primary" name="selectedUser" value="@data.UserName"><i class="bi bi-pen"></i> @TextModel.Context["edit"]</button>
+                        </form>
+                        <p></p>
+                        <form asp-controller="MyPage" asp-action="DeleteProfile" class="form-horizontal">
+                            <button type="submit" class="btn btn-danger" name="userId" value="@data.Id"><i class="bi bi-trash"></i>@TextModel.Context["remove"]</button>
+                        </form>
+                        <p></p>
+                        <form asp-controller="MyPage" asp-action="BlockUser" class="form-horizontal">
+                            <button type="submit" class="btn btn-primary" name="userId" value="@data.Id">@blockText</button>
+                        </form>
+                        <p></p>
+                        <form asp-controller="MyPage" asp-action="MakeAdmin" class="form-horizontal">
+                            <button type="submit" class="btn btn-primary" name="userId" value="@data.Id">@TextModel.Context["make admin"]</button>
+                        </form>
+                    }
+                    
+                }
             </td>
             <td>@data.Id</td>
             <td>@data.UserName</td>

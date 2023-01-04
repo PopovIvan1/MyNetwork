@@ -1,20 +1,15 @@
-﻿<form asp-controller="MyPage" asp-action="BackToMyPage" class="form-horizontal">
-    <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-square"></i> @TextModel.Context["back to your page"]</button>
-</form>
-<div class="text-center">
-    <h1 class="display-4">@TextModel.Context["create bew review"]</h1>
-</div>
-<div class="row justify-content-md-center">
+﻿<div class="row justify-content-md-center">
     <div class="col-md-4">
         <section>
-            <form asp-controller="MyPage" asp-action="AddReviewToDb" class="form-horizontal" enctype="multipart/form-data">
+            <form asp-controller="Review" asp-action="CreationReview" class="form-horizontal" enctype="multipart/form-data">
                 <div class="form-floating" style="color: #555; font-size: 18px; text-align: center; width: 400px; height: 150px; margin: 50px auto; background: #eee; border: 1px solid #ccc;">
                     <input name="image" title="" class="form-control" style="opacity: 0; z-index: -1; width: 400px; height: 400px" type="file" id="dropZone" accept="image/*" />
                     <label class="form-label" id="image">@TextModel.Context["upload image"]</label>
+                    <button style="float: right; position: absolute; top: 0px; right: 0px" onclick="clearImage();" type="button"><i class="bi bi-file-excel"></i></button>
                 </div>
+                <input id="hidenInput" name="isImageDeleted" value="" style="display: none"/>
                 <script>
                     let load = document.querySelector('#image');
-
                     document.querySelector('#dropZone').addEventListener('change', function (e) {
                         let tgt = e.target || window.event.srcElement,
                             files = tgt.files;
@@ -33,14 +28,21 @@
                             };
                         }
                     });
+                    function clearImage() {
+                        $("#dropZone")[0].value = "";
+                        document.getElementById('dropZone').innerHTML = '';
+                        document.querySelector('#image').innerHTML = '';
+                        document.querySelector('#image').insertAdjacentHTML('beforeEnd', '<label>@TextModel.Context["upload image"]</label>');
+                        document.getElementById('hidenInput').value = 'yes';
+                    }
                 </script>
                 <p></p>
                 <div class="form-floating" style="color:black;">
-                    <input name="reviewName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
+                    <input id="reviewName" name="reviewName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
                     <label class="form-label">@TextModel.Context["review name"]</label>
                 </div>
                 <div class="form-floating" style="color:black;">
-                    <input name="creationName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
+                    <input id="creationName" name="creationName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
                     <label class="form-label">@TextModel.Context["creation name"]</label>
                 </div>
                 <div class="form-floating" id="tags">
@@ -62,14 +64,14 @@
                 </div>
                 <p></p>
                 <div class="form-floating" style="color:black;">
-                    <textarea id="editor" name="description">@TextModel.Context["typing description"]</textarea>
+                    <textarea id="editor" name="description">@ViewData["description"]</textarea>
                 </div>
                 <div class="form-floating">
                     @TextModel.Context["your rate"]:
                     <input type="number" name="rate" min="0" onchange="checkNumber();" style="float: right" value="0" id="number" />
                 </div>
                 <p></p>
-                <button type="submit" class="btn btn-primary" style="float: right" onclick="suneditor.save();">@TextModel.Context["new review"]</button>
+                <button type="submit" class="btn btn-primary" style="float: right" onclick="suneditor.save();" name="action" id="button"><section id="buttonText"></section></button>
                 <datalist id="dataList">
                     @foreach (var tagFromDb in ViewData.Model)
                     {

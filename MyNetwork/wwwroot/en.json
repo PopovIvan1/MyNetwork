@@ -85,5 +85,8 @@
   "delete profile": "Delete profile",
   "correct data": "Please, enter correct details.",
   "block user": "Block user",
-  "make admin": "Make admin"
+  "make admin": "Make admin",
+  "unblock user": "Unblock user",
+  "admin": "Admin",
+  "user blocked": "User blocked"
 }

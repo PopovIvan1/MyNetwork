@@ -1,0 +1,15 @@
+﻿<form asp-controller="MyPage" asp-action="BackToMyPage" class="form-horizontal">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-square"></i> @TextModel.Context["back to your page"]</button>
+</form>
+<div class="text-center">
+    <h1 class="display-4">@TextModel.Context["create bew review"]</h1>
+</div>
+@{
+    ViewData.Add("description", TextModel.Context["typing description"]);
+    <partial name="../Review/CreationReview" model="ViewData.Model" view-data="ViewData" />
+    ViewData.Remove("description");
+}
+<script>
+    document.getElementById('button').value = 'addToDb';
+    document.getElementById('buttonText').innerHTML = '@TextModel.Context["new review"]';
+</script>

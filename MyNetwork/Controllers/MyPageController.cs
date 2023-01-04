@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using MyNetwork.Models;
 
 
@@ -33,23 +32,6 @@ namespace MyNetwork.Controllers
         {
             ViewData.Model = db.AspNetUsers;
             return View();
-        }
-
-        public IActionResult NewReview()
-        {
-            ViewData.Model = db.Tags;
-            return View();
-        }
-
-        public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image)
-        {
-            if (description.Contains(TextModel.Context["typing description"])) description = "";
-            string imgName = await ImageService.GetImageName(image);
-            Review review = new Review() { Name = reviewName, CreationName = creationName, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), AuthorId = CurrentUserSettings.CurrentUser.Id, ImageUrl = imgName };
-            db.Reviews.Add(review);
-            db.SaveChanges();
-            await db.SetTagsToDb(tags, (await db.Reviews.FirstOrDefaultAsync(reviewFromDb => reviewFromDb.Date == review.Date && reviewFromDb.AuthorId == review.AuthorId)).Id);
-            return RedirectToAction("MyPage", "MyPage");
         }
 
         public IActionResult BackToMyPage()
@@ -103,15 +85,13 @@ namespace MyNetwork.Controllers
             return RedirectToAction("AdminMode", "MyPage");
         }
 
-        /*public async Task<IActionResult> BlockUser(string userId)
+        public async Task<IActionResult> BlockUser(string userId)
         {
-            User currentUser;
-            if (!string.IsNullOrEmpty(userId)) currentUser = await db.GetUserByIdAsync(userId);
-            else currentUser = CurrentUserSettings.CurrentUser;
-            await checkAdminMode(currentUser);
-            await db.RemoveUser(currentUser);
-            return RedirectToAction("Index", "Home");
-        }*/
+            User currentUser = await db.GetUserByIdAsync(userId);
+            currentUser.IsBlock = currentUser.IsBlock == "block" ? "" : "block";
+            db.SaveChanges();
+            return RedirectToAction("AdminMode", "MyPage");
+        }
 
         private async Task checkAdminMode(User currentUser)
         {

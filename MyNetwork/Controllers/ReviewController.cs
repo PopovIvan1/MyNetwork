@@ -14,6 +14,18 @@ namespace MyNetwork.Controllers
             this.db = db;
         }
 
+        public IActionResult NewReview()
+        {
+            ViewData.Model = db.Tags;
+            return View();
+        }
+
+        public async Task<IActionResult> CreationReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image, string action, string isImageDeleted)
+        {
+            if (action == "addToDb") return await AddReviewToDbAsync(reviewName, creationName, tags, category, description, rate, image);
+            else return await UpdateReview(reviewName, creationName, tags, category, description, rate, image, isImageDeleted);
+        }
+
         public IActionResult ReviewPage(string review)
         {
             currentReviewId = int.Parse(review);
@@ -38,19 +50,24 @@ namespace MyNetwork.Controllers
         {
             Review currentReview = await db.Reviews.FirstOrDefaultAsync(review => review.Id == int.Parse(reviewId));
             (await db.GetUserByIdAsync(currentReview.AuthorId)).Likes -= currentReview.Likes;
-            ImageService.Remove(currentReview.ImageUrl);
+            if (!string.IsNullOrEmpty(currentReview.ImageUrl)) await ImageService.Remove(currentReview.ImageUrl);
             await db.Rates.Where(rate => rate.ReviewId == currentReview.Id).ForEachAsync(rate => db.Rates.Remove(rate));
             db.Reviews.Remove(currentReview);
             db.SaveChanges();
             return RedirectToAction("MyPage", "MyPage");
         }
 
-        public async Task<IActionResult> UpdateReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image)
+        public async Task<IActionResult> UpdateReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image, string isImageDeleted)
         {
             await db.RemoveTags(currentReviewId);
             Review currentReview = await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId);
             string imgName = await ImageService.GetImageName(image);
             if (!string.IsNullOrEmpty(imgName)) currentReview.ImageUrl = imgName;
+            else if (isImageDeleted == "yes")
+            {
+                await ImageService.Remove(currentReview.ImageUrl);
+                currentReview.ImageUrl = "";
+            }
             string oldCreationName = currentReview.CreationName;
             currentReview.CreationName = creationName;
             currentReview.Name = reviewName;
@@ -60,6 +77,17 @@ namespace MyNetwork.Controllers
             db.SaveChanges();
             await db.SetTagsToDb(tags, currentReviewId);
             if (oldCreationName != creationName) db.UpdateRates(currentReviewId, creationName, oldCreationName);
+            return RedirectToAction("MyPage", "MyPage");
+        }
+
+        public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image)
+        {
+            if (description.Contains(TextModel.Context["typing description"])) description = "";
+            string imgName = await ImageService.GetImageName(image);
+            Review review = new Review() { Name = reviewName, CreationName = creationName, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), AuthorId = CurrentUserSettings.CurrentUser.Id, ImageUrl = imgName };
+            db.Reviews.Add(review);
+            db.SaveChanges();
+            await db.SetTagsToDb(tags, (await db.Reviews.FirstOrDefaultAsync(reviewFromDb => reviewFromDb.Date == review.Date && reviewFromDb.AuthorId == review.AuthorId)).Id);
             return RedirectToAction("MyPage", "MyPage");
         }
 

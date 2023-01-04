@@ -23,10 +23,12 @@ namespace MyNetwork.Areas.Identity.Pages.Account
     public class LoginModel : PageModel
     {
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly ApplicationContext _db;
         private readonly ILogger<LoginModel> _logger;
 
-        public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger, ApplicationContext db)
         {
+            _db = db;
             _signInManager = signInManager;
             _logger = logger;
         }
@@ -119,6 +121,12 @@ namespace MyNetwork.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            User user = await _db.FindUserByNameAsync(Input.Name);
+            if (user != null && user.IsBlock == "block")
+            {
+                ModelState.AddModelError(string.Empty, TextModel.Context["user blocked"]);
+                return Page();
+            }
             returnUrl ??= Url.Content("~/");
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
