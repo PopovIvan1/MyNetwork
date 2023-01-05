@@ -42,11 +42,12 @@ namespace MyNetwork.Models
             return await AspNetUsers.FirstOrDefaultAsync(user => user.Id == userId);
         }
 
-        public List<string> SelectReviewTags(int reviewId)
+        public async Task<List<string>> SelectReviewTags(int reviewId)
         {
-            return Tags.Where(tag => 
-            ReviewTags.Where(reviewTag => reviewTag.ReviewId == reviewId).Select(reviewTag => reviewTag.TagId)
-            .Contains(tag.Id)).ToList().Select(tag => tag.Name).ToList();
+            return await (from tag in Tags
+                    join reviewTag in ReviewTags on tag.Id equals reviewTag.TagId
+                    where reviewTag.ReviewId == reviewId
+                    select tag.Name).ToListAsync(); 
         }
 
         public List<Comment> SelectReviewComments(int reviewId)
@@ -54,7 +55,7 @@ namespace MyNetwork.Models
             return Comments.Where(comment => comment.ReviewId == reviewId).OrderBy(comment => comment.Date).ToList();
         }
 
-        public List<Review> SelectReviewsWithSettings(string category, string searchType, string tags)
+        public async Task<List<Review>> SelectReviewsWithSettings(string category, string searchType, string tags)
         {
             List<string> tagsToList = tags.Split(' ').ToList();
             var reviewsWithCurrentCategory = category == "all" ? Reviews : Reviews.Where(review => review.Category == category);
@@ -63,7 +64,7 @@ namespace MyNetwork.Models
                 searchType == "last views" ?
                 reviewsWithCurrentCategory.OrderByDescending(review => review.Date).ToList() :
                 tagsToList[0] == "" ? reviewsWithCurrentCategory.ToList() :
-                getReviewsByTags(reviewsWithCurrentCategory.ToList(), tagsToList);
+                await getReviewsByTags(reviewsWithCurrentCategory.ToList(), tagsToList);
             return resultReviews.Take(resultReviews.Count > 10 ? 10 : resultReviews.Count).ToList();
         }
 
@@ -116,12 +117,12 @@ namespace MyNetwork.Models
             SaveChanges();
         }
 
-        private List<Review> getReviewsByTags(List<Review> reviewsWithCurrentCategory, List<string> tags)
+        private async Task<List<Review>> getReviewsByTags(List<Review> reviewsWithCurrentCategory, List<string> tags)
         {
             List<Review> resultReviews = new List<Review>();
             foreach (var review in reviewsWithCurrentCategory)
             {
-                var reviewTags = SelectReviewTags(review.Id);
+                var reviewTags = await SelectReviewTags(review.Id);
                 if (reviewTags.Count != 0 && tags.All(tag => reviewTags.Contains(HttpUtility.UrlDecode(tag)))) resultReviews.Add(review);
             }
             return resultReviews;

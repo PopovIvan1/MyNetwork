@@ -2,32 +2,31 @@
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 @model ApplicationContext
-@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.js"></script>
 <script>
     let color;
 </script>
 
 <div class="row justify-content-md-center">
     <div class="col-md-6">
-
         @{
-            string tableTextColor;
-            if (HttpContextAccessor.HttpContext?.Request.Cookies["theme"] == "dark") tableTextColor = "white";
-            else tableTextColor = "dark";
+            <button class="btn btn-primary" onclick="generatePDF();"><i class="bi-save"></i> @TextModel.Context["save"]</button>
             Review data = Model.Reviews.FirstOrDefault(review => review.Id == (int)ViewData["reviewId"]);
             User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
             ViewData.Add("authorName", user.UserName);
             ViewData.Add("likes", user.Likes);
-            ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(data.Id)));
-            <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
+            ViewData.Add("reviewTags", string.Join(' ', await ViewData.Model.SelectReviewTags(data.Id)));
+            <div id="@data.Id">
+                <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
+            </div>
             ViewData.Remove("authorName");
             ViewData.Remove("likes");
             ViewData.Remove("reviewTags");
             if (SignInManager.IsSignedIn(User))
             {
                 <script>
-                    document.getElementById('likes-@data.Id').innerHTML = '';
+                    document.getElementById('likes').innerHTML = '';
                 </script>
                 if (Model.Likes.FirstOrDefault(like => like.UserId == ViewData["userId"] && like.ReviewId == data.Id) != null)
                 {
@@ -48,7 +47,7 @@
                     userRate = rate.UserRate;
                 }
                 <script>
-                    document.getElementById('likes-@data.Id').insertAdjacentHTML("afterbegin", '<div style="float: right" id="likes"><p><i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label></p><p></p>@TextModel.Context["your rate"]:<label style="color: yellow" id="yourRate"></label></div>');
+                    document.getElementById('likes').insertAdjacentHTML("afterbegin", '<div style="float: right" id="likes"><p><i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label></p><p></p>@TextModel.Context["your rate"]:<label style="color: yellow" id="yourRate"></label></div>');
                     getUserRate('@userRate.ToString()', 'yourRate');
                     let stars = document.getElementById('yourRate').querySelectorAll("i");
                     stars.forEach((star, i) => {
@@ -57,8 +56,9 @@
                     document.getElementById('heart').style.color = color;
                 </script>
             }
+            <p></p>
             <h4>@TextModel.Context["comments"]</h4>
-            <table class="table" style="color: @tableTextColor" id="Comments">
+            <table class="table" id="Comments">
                 @foreach (var comment in Model.SelectReviewComments(data.Id))
                 {
                     <tr>
@@ -73,6 +73,17 @@
                 }
             </table>
             <script>
+                function generatePDF() {
+                    let likes = document.getElementById('likes');
+                    likes.style.display = 'none';
+                    let element = document.getElementById('@data.Id');
+                    let clone = element.cloneNode(true);
+                    likes.style.display = 'block';
+                    html2pdf()
+                        .from(clone)
+                        .save();
+                }
+
                 function updateComments() {
                     setTimeout(function () {
                         $.ajax({
@@ -82,7 +93,7 @@
                             data: {
                                 currentCommentsCount: document.getElementById('Comments').getElementsByTagName('tr').length,
                                 reviewId: @data.Id
-                                                                                            },
+                                             },
                             success: function (comment) {
                                 document.getElementById('Comments').insertAdjacentHTML("beforeend", comment);
                             },
@@ -95,7 +106,7 @@
             </script>
             @if (SignInManager.IsSignedIn(User))
             {
-                <table class="table" style="color: @tableTextColor">
+                <table class="table">
                     <tr>
                         <td>
                             <form asp-controller="Review" asp-action="NewComment" class="form-horizontal">
@@ -116,7 +127,7 @@
         {
             <h3>@TextModel.Context["same reviews"]</h3>
             <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">
-                <table class="table" style="border-style: solid; border-color: red; color: @tableTextColor; ">
+                <table class="table" style="border-style: solid; border-color: red; ">
                     @foreach (var review in sameReviews)
                     {
                         <tr>
@@ -126,7 +137,7 @@
                                     user = await ViewData.Model.GetUserByIdAsync(review.AuthorId.ToString());
                                     ViewData.Add("authorName", user.UserName);
                                     ViewData.Add("likes", user.Likes);
-                                    ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(review.Id)));
+                                    ViewData.Add("reviewTags", string.Join(' ', await ViewData.Model.SelectReviewTags(review.Id)));
                                     <partial name="../Review/ReviewData" model="review" view-data="ViewData" />
                                     ViewData.Remove("authorName");
                                     ViewData.Remove("likes");

@@ -1,18 +1,11 @@
-﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
-
-<div class="text-center">
+﻿<div class="text-center">
     <h1 class="display-4">@TextModel.Context["admin mode"]</h1>
 </div>
 <form asp-controller="MyPage" asp-action="BackToNotAdminMode" class="form-horizontal">
     <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-square"></i> @TextModel.Context["back to your page"]</button>
 </form>
-@{
-    string tableTextColor;
-    if (HttpContextAccessor.HttpContext?.Request.Cookies["theme"] == "dark") tableTextColor = "white";
-    else tableTextColor = "dark";
-}
 <h2>@TextModel.Context["list of users"]</h2>
-<table class="table" style="color: @tableTextColor">
+<table class="table">
     <tr>
         <th></th>
         <th>Id</th>

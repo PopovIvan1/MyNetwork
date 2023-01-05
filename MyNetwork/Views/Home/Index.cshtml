@@ -1,9 +1,4 @@
-﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
-
-@{
-    string tableTextColor;
-    if (HttpContextAccessor.HttpContext?.Request.Cookies["theme"] == "dark") tableTextColor = "white";
-    else tableTextColor = "dark";
+﻿@{
     ViewData["Title"] = "Home Page";
 }
 
@@ -81,8 +76,8 @@
     <h3>@TextModel.Context["search results"]</h3>
     <p></p>
     <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">
-        <table class="table" style="border-style: solid; border-color: red; color: @tableTextColor; ">
-            @foreach (var data in ViewData.Model.SelectReviewsWithSettings(ViewData["category"]?.ToString(), ViewData["searchType"]?.ToString(), ViewData["tags"].ToString()))
+        <table class="table" style="border-style: solid; border-color: red; ">
+            @foreach (var data in await ViewData.Model.SelectReviewsWithSettings(ViewData["category"]?.ToString(), ViewData["searchType"]?.ToString(), ViewData["tags"].ToString()))
             {
                 <tr>
                     <td><button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
@@ -91,7 +86,7 @@
                             User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
                             ViewData.Add("authorName", user.UserName);
                             ViewData.Add("likes", user.Likes);
-                            ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(data.Id)));
+                            ViewData.Add("reviewTags", string.Join(' ', await ViewData.Model.SelectReviewTags(data.Id)));
                             <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
                             ViewData.Remove("authorName");
                             ViewData.Remove("likes");

@@ -27,15 +27,22 @@
 </script>
 @if (data.ImageUrl != "")
 {
-    string imgName = data.ImageUrl;
-    byte[] imgBytes = await ImageService.Download(imgName);
-    string str = Convert.ToBase64String(imgBytes);
     <script>
         document.querySelector('#image').innerHTML = '';
-        document.querySelector('#image').insertAdjacentHTML("beforeend", '<p><img style="width: 30%;" src="data:image/*;base64,@str" alt="Red dot" /></p>');
     </script>
+    foreach (var imgName in data.ImageUrl.Split(' '))
+    {
+        if (imgName != "")
+        {
+            byte[] imgBytes = await ImageService.Download(imgName);
+            string str = Convert.ToBase64String(imgBytes);
+            <script>
+                document.querySelector('#image').insertAdjacentHTML("beforeend", '<img style="width: 30%;" src="data:image/*;base64,@str" alt="Red dot" />');
+            </script>
+        }
+    }
 }
-@foreach (var tag in ViewData.Model.SelectReviewTags(data.Id))
+@foreach (var tag in await ViewData.Model.SelectReviewTags(data.Id))
 {
     <script>
         var str = "@HttpUtility.UrlEncode(tag.Replace(" ", "\u00A0"))";

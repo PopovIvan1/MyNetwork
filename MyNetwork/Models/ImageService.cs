@@ -41,20 +41,33 @@ namespace MyNetwork.Models
 
         public static async Task Remove(string file)
         {
-            await dbx.Files.DeleteV2Async("/" + folder + "/" + file);
+            foreach (var img in file.Split(' '))
+            {
+                if (img != "")
+                    await dbx.Files.DeleteV2Async("/" + folder + "/" + img);
+            }
         }
 
-        public static async Task<string> GetImageName(IFormFile image)
+        public static async Task<string> GetImageName(IFormFile[] images)
         {
             string imgName = "";
-            if (image != null && image.ContentType.Contains("image"))
+            if (images.Length > 0)
             {
-                imgName = DateTime.Now.ToString().Replace('.', '-').Replace(' ', '-').Replace(':', '-').Replace('/', '-') + '.' + image.FileName.Split('.').Last();
-                using (var fileStream = image.OpenReadStream())
+                int index = 0;
+                foreach (var image in images)
                 {
-                    byte[] bytes = new byte[image.Length];
-                    fileStream.Read(bytes, 0, (int)image.Length);
-                    await Upload(imgName, bytes);
+                    if (image.ContentType.Contains("image"))
+                    {
+                        string curImgName = index.ToString() + '_' + DateTime.Now.ToString().Replace('.', '-').Replace(' ', '-').Replace(':', '-').Replace('/', '-') + '.' + image.FileName.Split('.').Last();
+                        imgName += curImgName + ' ';
+                        using (var fileStream = image.OpenReadStream())
+                        {
+                            byte[] bytes = new byte[image.Length];
+                            fileStream.Read(bytes, 0, (int)image.Length);
+                            await Upload(curImgName, bytes);
+                        }
+                        index++;
+                    }
                 }
             }
             return imgName;

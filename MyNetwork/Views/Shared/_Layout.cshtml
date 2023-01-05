@@ -121,3 +121,11 @@
     <div id="lastDiv"></div>
 </body>
 </html>
+@if (currentTheme == "dark")
+{
+    <script>
+        document.querySelectorAll('table').forEach(item => {
+            item.style.color = 'white';
+        })
+    </script>
+}

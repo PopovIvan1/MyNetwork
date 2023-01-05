@@ -11,18 +11,18 @@
     </div>
     if (Model.ImageUrl != "")
     {
-        <script>
-            setTimeout(function () {
-                @{
-                    string imgName = Model.ImageUrl;
-                    byte[] imgBytes = await ImageService.Download(imgName);
-                    string str = Convert.ToBase64String(imgBytes);
-                }
-                document.getElementById('likes-@Model.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
-            }, 200);
-        </script>
+        foreach (var imgName in Model.ImageUrl.Split(' '))
+        {
+            if (imgName != "")
+            {
+                byte[] imgBytes = await ImageService.Download(imgName);
+                string str = Convert.ToBase64String(imgBytes);
+                <script>
+                    document.getElementById('likes-@Model.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+                </script>
+            }
+        }
     }
-
     <p>@TextModel.Context["reviewname"]@Model.Name</p>
     <p>@TextModel.Context["creation review name"]<label id="creationName">@Model.CreationName</label></p>
     <p>@TextModel.Context["author"]@ViewData["authorName"] (<i style="color: green">@ViewData["likes"]</i>)</p>

@@ -20,7 +20,7 @@ namespace MyNetwork.Controllers
             return View();
         }
 
-        public async Task<IActionResult> CreationReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image, string action, string isImageDeleted)
+        public async Task<IActionResult> CreationReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile[] image, string action, string isImageDeleted)
         {
             if (action == "addToDb") return await AddReviewToDbAsync(reviewName, creationName, tags, category, description, rate, image);
             else return await UpdateReview(reviewName, creationName, tags, category, description, rate, image, isImageDeleted);
@@ -57,7 +57,7 @@ namespace MyNetwork.Controllers
             return RedirectToAction("MyPage", "MyPage");
         }
 
-        public async Task<IActionResult> UpdateReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image, string isImageDeleted)
+        public async Task<IActionResult> UpdateReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile[] image, string isImageDeleted)
         {
             await db.RemoveTags(currentReviewId);
             Review currentReview = await db.Reviews.FirstOrDefaultAsync(review => review.Id == currentReviewId);
@@ -80,7 +80,7 @@ namespace MyNetwork.Controllers
             return RedirectToAction("MyPage", "MyPage");
         }
 
-        public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile image)
+        public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile[] image)
         {
             if (description.Contains(TextModel.Context["typing description"])) description = "";
             string imgName = await ImageService.GetImageName(image);
@@ -102,6 +102,7 @@ namespace MyNetwork.Controllers
         {
             if (db.SelectReviewComments(reviewId).Count == currentCommentsCount) return "";
             Comment newComment = db.SelectReviewComments(reviewId).Last();
+            if (newComment.UserName == CurrentUserSettings.CurrentUser.UserName) return "";
             return $"<tr><td style=\"width: 40%\">{newComment.UserName} " +
                 $"(<i style=\"color: green\">{newComment.UserLikes}</i>):<p style=\"color: grey\">" +
                 $"{newComment.Date.ToShortDateString()}</p></td><td align=\"left\" style=\"width: 60%\">" +

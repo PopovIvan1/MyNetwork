@@ -3,12 +3,8 @@
 @using System.Web;
 @using System.IO;
 @model ApplicationContext
-@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
 @{
-    string tableTextColor;
-    if (HttpContextAccessor.HttpContext?.Request.Cookies["theme"] == "dark") tableTextColor = "white";
-    else tableTextColor = "dark";
     ViewData["Title"] = "Home Page";
     string searchString = ViewData["searchString"].ToString();
     List<Review> searchResults = new List<Review>();
@@ -36,7 +32,7 @@
 </script>
 
 <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">
-    <table class="table" style="border-style: solid; border-color: red; color: @tableTextColor; ">
+    <table class="table" style="border-style: solid; border-color: red; ">
         @foreach (var data in searchResults.Distinct())
         {
             <tr>
@@ -46,7 +42,7 @@
                         User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
                         ViewData.Add("authorName", user.UserName);
                         ViewData.Add("likes", user.Likes);
-                        ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(data.Id)));
+                        ViewData.Add("reviewTags", string.Join(' ', await ViewData.Model.SelectReviewTags(data.Id)));
                         <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
                         ViewData.Remove("authorName");
                         ViewData.Remove("likes");

@@ -1,4 +1,6 @@
-﻿function uploadImage() {
+﻿let siteColor = 'white';
+
+function uploadImage() {
     $.ajax({
         url: "/MyPage/UploadImage",
         method: 'GET',
@@ -121,10 +123,32 @@ function changeTheme() {
             theme: document.getElementById(id).value
         }
     });
-    setTimeout(function () {
-        location.reload();
-    }, 700);
+    if (siteColor == 'white') {
+        siteColor = 'black';
+        setDark();
+    }
+    else {
+        siteColor = 'white';
+        setWhite();
+    }
 }
+
+function setDark() {
+    document.body.style.backgroundColor = '#151313';
+    document.body.style.color = 'white';
+    document.querySelectorAll('table').forEach(item => {
+        item.style.color = 'white';
+    })
+}
+
+function setWhite() {
+    document.body.style.backgroundColor = 'white';
+    document.body.style.color = 'black';
+    document.querySelectorAll('table').forEach(item => {
+        item.style.color = 'black';
+    })
+}
+
 function changeLanguage() {
     let id;
     if (document.getElementById('menuContent').style.display == 'none') id = 'languageSelector';

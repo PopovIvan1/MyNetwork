@@ -1,13 +1,4 @@
-﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
-
-@{
-    string tableTextColor;
-    if (HttpContextAccessor.HttpContext?.Request.Cookies["theme"] == "dark") tableTextColor = "white";
-    else tableTextColor = "dark";
-    ViewData["Title"] = "My Page";
-}
-
-<div class="text-center">
+﻿<div class="text-center">
     @{
         int userLikes = (await ViewData.Model.FindUserByNameAsync(ViewData["username"]?.ToString())).Likes;
     }
@@ -65,7 +56,7 @@
         document.getElementById('sortOrderSelector').value = "@ViewData["sortOrder"]?.ToString()";
     </script>
 </form>
-<table class="table" style="border-style: solid; border-color: red; color: @tableTextColor">
+<table class="table" style="border-style: solid; border-color: red;">
     @foreach (var data in await ViewData.Model.SelectUserReviews(ViewData["username"]?.ToString(), ViewData["category"]?.ToString(), ViewData["sortOrder"]?.ToString()))
     {
         <tr>
@@ -87,7 +78,7 @@
                     User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
                     ViewData.Add("authorName", user.UserName);
                     ViewData.Add("likes", user.Likes);
-                    ViewData.Add("reviewTags", string.Join(' ', ViewData.Model.SelectReviewTags(data.Id)));
+                    ViewData.Add("reviewTags", string.Join(' ', await ViewData.Model.SelectReviewTags(data.Id)));
                     <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
                     ViewData.Remove("authorName");
                     ViewData.Remove("likes");

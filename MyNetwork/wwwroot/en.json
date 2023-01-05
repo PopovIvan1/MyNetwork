@@ -88,5 +88,7 @@
   "make admin": "Make admin",
   "unblock user": "Unblock user",
   "admin": "Admin",
-  "user blocked": "User blocked"
+  "user blocked": "User blocked",
+  "max file count": "Can't upload more than 3 files",
+  "save": "Save"
 }
