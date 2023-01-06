@@ -201,7 +201,7 @@ document.getElementById('navbar').querySelectorAll('li').forEach((element, index
 function AutoScale() {
     let width = window.innerWidth;
     let elements = document.getElementById('navbar').querySelectorAll('li');
-    if (width < 800) {
+    if (width < 900) {
         elements.forEach(element => {
             element.style.display = 'none';
         });

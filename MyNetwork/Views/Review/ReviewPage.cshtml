@@ -74,14 +74,22 @@
             </table>
             <script>
                 function generatePDF() {
+                    if (siteColor == 'black') {
+                        document.getElementById('@data.Id').style.color = 'black';
+                    }
                     let likes = document.getElementById('likes');
                     likes.style.display = 'none';
                     let element = document.getElementById('@data.Id');
                     let clone = element.cloneNode(true);
                     likes.style.display = 'block';
+                    let opt = {
+                        filename: 'review@(data.Id).pdf',
+                    }
                     html2pdf()
+                        .set(opt)
                         .from(clone)
                         .save();
+                    document.getElementById('@data.Id').style.color = 'inherit';
                 }
 
                 function updateComments() {

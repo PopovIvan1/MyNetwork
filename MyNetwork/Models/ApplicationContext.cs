@@ -47,7 +47,7 @@ namespace MyNetwork.Models
             return await (from tag in Tags
                     join reviewTag in ReviewTags on tag.Id equals reviewTag.TagId
                     where reviewTag.ReviewId == reviewId
-                    select tag.Name).ToListAsync(); 
+                    select tag.Name).ToListAsync();
         }
 
         public List<Comment> SelectReviewComments(int reviewId)

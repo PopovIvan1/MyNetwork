@@ -96,23 +96,27 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
     @{
-        if (CurrentUserSettings.AdminMode != "" && CurrentUserSettings.AdminMode != "available" && CurrentUserSettings.AdminMode != "not available")
+        if (CurrentUserSettings.AdminMode != "" && !CurrentUserSettings.AdminMode.Contains("available"))
         {
             @CurrentUserSettings.AdminMode
             <div class="row">
                 <div class="col-md-2">
                     <form asp-controller="MyPage" asp-action="BackToAdminMode" class="form-horizontal">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-square"></i> @TextModel.Context["back to admin mode"]</button>
+                        <button type="submit" class="btn btn-primary" style="min-width: 300px"><i class="bi bi-arrow-left-square"></i> @TextModel.Context["back to admin mode"]</button>
                     </form>
                 </div>
             </div>
             <p></p>
         }
     }
-    <form style="float: right" asp-controller="Home" asp-action="FullTextSearch" class="form-horizontal" id="searchForm">
-        <input type="search" name="searchString" id="searchInput">
-        <input type="submit" value=@TextModel.Context["search"]>
-    </form>
+    <div class="row">
+        <div class="col align-self-end">
+            <form style="float: right" asp-controller="Home" asp-action="FullTextSearch" class="form-horizontal" id="searchForm">
+                <input type="search" name="searchString" id="searchInput">
+                <input type="submit" value=@TextModel.Context["search"]>
+            </form>
+        </div>
+    </div>
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -126,6 +130,11 @@
     <script>
         document.querySelectorAll('table').forEach(item => {
             item.style.color = 'white';
-        })
+        });
+        siteColor = 'black';
     </script>
+}
+else
+{
+    <script>siteColor = 'white';</script>
 }
