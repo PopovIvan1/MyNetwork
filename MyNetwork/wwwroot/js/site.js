@@ -7,9 +7,9 @@ function uploadImage() {
     });
 }
 
-function addTagLabel() {
+function addTagLabel(id) {
     let isEmptyTags = 0;
-    let tags = document.querySelectorAll("#labelForTags");
+    let tags = document.querySelectorAll(id);
     tags.forEach(item => {
         if (item.querySelector("#tag").value == "") isEmptyTags += 1;
         if (isEmptyTags > 1 && item.querySelector("#tag").value == "") item.remove();

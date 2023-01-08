@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using MyNetwork.Models;
 using Humanizer.Localisation;
 using System.ComponentModel;
+using Microsoft.EntityFrameworkCore;
 
 namespace MyNetwork.Areas.Identity.Pages.Account
 {
@@ -121,7 +122,7 @@ namespace MyNetwork.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
-            User user = await _db.FindUserByNameAsync(Input.Name);
+            User user = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == Input.Name);
             if (user != null && user.IsBlock == "block")
             {
                 ModelState.AddModelError(string.Empty, TextModel.Context["user blocked"]);

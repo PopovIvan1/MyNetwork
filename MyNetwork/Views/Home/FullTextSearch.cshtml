@@ -2,23 +2,11 @@
 @using System;
 @using System.Web;
 @using System.IO;
-@model ApplicationContext
+@model List<Review>
 
 @{
     ViewData["Title"] = "Home Page";
     string searchString = ViewData["searchString"].ToString();
-    List<Review> searchResults = new List<Review>();
-    searchResults.AddRange(Model.Reviews.FullTextSearchQuery(searchString));
-
-    List<string> users = Model.AspNetUsers.FullTextSearchQuery(searchString).Select(user => user.Id).ToList();
-    searchResults.AddRange(Model.Reviews.Where(review => users.Contains(review.AuthorId)));
-
-    List<int> comments = Model.Comments.FullTextSearchQuery(searchString).Select(comment => comment.ReviewId).ToList();
-    searchResults.AddRange(Model.Reviews.Where(review => comments.Contains(review.Id)));
-
-    List<int> tags = Model.Tags.FullTextSearchQuery(searchString).Select(tag => tag.Id).ToList();
-    tags = Model.ReviewTags.Where(reviewTag => tags.Contains(reviewTag.TagId)).Select(tag => tag.ReviewId).ToList();
-    searchResults.AddRange(Model.Reviews.Where(review => tags.Contains(review.Id)));
 }
 
 <h3>@TextModel.Context["search results"]</h3>
@@ -33,21 +21,12 @@
 
 <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">
     <table class="table" style="border-style: solid; border-color: red; ">
-        @foreach (var data in searchResults.Distinct())
+        @foreach (var data in Model)
         {
             <tr>
                 <td><button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
                 <td id="@data.Id" align="left" style="width: 80%">
-                    @{
-                        User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
-                        ViewData.Add("authorName", user.UserName);
-                        ViewData.Add("likes", user.Likes);
-                        ViewData.Add("reviewTags", string.Join(' ', await ViewData.Model.SelectReviewTags(data.Id)));
-                        <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
-                        ViewData.Remove("authorName");
-                        ViewData.Remove("likes");
-                        ViewData.Remove("reviewTags");
-                    }
+                    <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
                 </td>
             </tr>
         }

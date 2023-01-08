@@ -1,7 +1,7 @@
 ﻿using Dropbox.Api;
 using Dropbox.Api.Files;
 
-namespace MyNetwork.Models
+namespace MyNetwork.Services
 {
     public static class ImageService
     {
@@ -27,8 +27,8 @@ namespace MyNetwork.Models
         }
 
         public static string getToken()
-        { 
-            return token; 
+        {
+            return token;
         }
 
         public static async Task<byte[]> Download(string file)

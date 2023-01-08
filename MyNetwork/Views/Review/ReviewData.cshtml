@@ -1,12 +1,14 @@
 ﻿@using System;
 @using System.Web;
 @using System.IO;
+@using MyNetwork.Services;
+@model Review;
 
 
 @{
     <div class="wrapper" style="width: 30%; float: right;" id="likes-@Model.Id">
         <div style="float: right" id="likes">
-            @TextModel.Context["likes"]@Model.Likes
+            @TextModel.Context["likes"]@Model.Likes.Count()
         </div>
     </div>
     if (Model.ImageUrl != "")
@@ -15,25 +17,39 @@
         {
             if (imgName != "")
             {
-                byte[] imgBytes = await ImageService.Download(imgName);
-                string str = Convert.ToBase64String(imgBytes);
                 <script>
-                    document.getElementById('likes-@Model.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+                    setTimeout(function () {
+                        @{
+                            byte[] imgBytes = await ImageService.Download(imgName);
+                            string str = Convert.ToBase64String(imgBytes);
+                        }
+                        document.getElementById('likes-@Model.Id').insertAdjacentHTML("beforeend", '<p><img style="width: 100%" src="data:image/*;base64,@str" alt="Red dot" /></p>');
+                    }, 200);
                 </script>
             }
         }
     }
     <p>@TextModel.Context["reviewname"]@Model.Name</p>
-    <p>@TextModel.Context["creation review name"]<label id="creationName">@Model.CreationName</label></p>
-    <p>@TextModel.Context["author"]@ViewData["authorName"] (<i style="color: green">@ViewData["likes"]</i>)</p>
+    <p>@TextModel.Context["creation review name"]<label id="creationName">@Model.Creation.Name</label></p>
+    <p>@TextModel.Context["author"]@Model.Author.UserName (<i style="color: green">@Model.Author.Reviews.Sum(r => r.Likes.Count())</i>)</p>
     <p>@TextModel.Context["category"]@TextModel.Context[Model.Category]</p>
-    <p>@TextModel.Context["tag"] <label>@ViewData["reviewTags"]</label></p>
+    <p>@TextModel.Context["tag"] <label>@string.Join(' ', Model.Tags.ToList().Select(tag => tag.Tag.Name))</label></p>
     <p>@TextModel.Context["author rate"]@Model.AuthorRate</p>
     <p>@TextModel.Context["creation rate"]<label style="color: yellow" id="creationRate-@Model.Id"></label></p>
     <p>@TextModel.Context["users rate"]<label style="color: yellow" id="userRate-@Model.Id"></label></p>
+    string cretionRate = "0";
+    string reviewRate = "0";
+    if (Model.Creation.Rates.Count() != 0)
+    {
+        cretionRate = Model.Creation.Rates.ToList().Average(r => r.UserRate).ToString().Replace(',', '.');
+    }
+    if (Model.Rates.Count() != 0)
+    {
+        reviewRate = Model.Rates.ToList().Average(r => r.UserRate).ToString().Replace(',', '.');
+    }
     <script>
-        getUserRate('@Model.UsersRate.ToString().Replace(',', '.')', 'creationRate-@Model.Id');
-        getUserRate('@Model.UsersReviewRate.ToString().Replace(',', '.')', 'userRate-@Model.Id');
+        getUserRate('@cretionRate', 'creationRate-@Model.Id');
+        getUserRate('@reviewRate', 'userRate-@Model.Id');
     </script>
     <p>@TextModel.Context["date"]@Model.Date.ToShortDateString()</p>
     <p>@TextModel.Context["description"]</p>

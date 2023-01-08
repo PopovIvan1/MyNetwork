@@ -1,7 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
-@model ApplicationContext
+@model List<Review>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.js"></script>
 <script>
@@ -12,23 +12,15 @@
     <div class="col-md-6">
         @{
             <button class="btn btn-primary" onclick="generatePDF();"><i class="bi-save"></i> @TextModel.Context["save"]</button>
-            Review data = Model.Reviews.FirstOrDefault(review => review.Id == (int)ViewData["reviewId"]);
-            User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
-            ViewData.Add("authorName", user.UserName);
-            ViewData.Add("likes", user.Likes);
-            ViewData.Add("reviewTags", string.Join(' ', await ViewData.Model.SelectReviewTags(data.Id)));
-            <div id="@data.Id">
-                <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
+            <div id="@Model.First().Id">
+                <partial name="../Review/ReviewData" model="Model.First()" view-data="ViewData" />
             </div>
-            ViewData.Remove("authorName");
-            ViewData.Remove("likes");
-            ViewData.Remove("reviewTags");
             if (SignInManager.IsSignedIn(User))
             {
                 <script>
                     document.getElementById('likes').innerHTML = '';
                 </script>
-                if (Model.Likes.FirstOrDefault(like => like.UserId == ViewData["userId"] && like.ReviewId == data.Id) != null)
+                if (Model.First().Likes.FirstOrDefault(like => like.UserId == ViewData["userId"].ToString() && like.ReviewId == Model.First().Id) != null)
                 {
                     <script>
                         color = "blue";
@@ -40,14 +32,14 @@
                         color = "";
                     </script>
                 }
-                Rate rate = Model.Rates.FirstOrDefault(rate => rate.UserId == ViewData["userId"] && rate.ReviewId == data.Id);
+                Rate rate = Model.First().Rates.FirstOrDefault(rate => rate.UserId == ViewData["userId"].ToString() && rate.ReviewId == Model.First().Id);
                 int userRate = 0;
                 if (rate != null)
                 {
                     userRate = rate.UserRate;
                 }
                 <script>
-                    document.getElementById('likes').insertAdjacentHTML("afterbegin", '<div style="float: right" id="likes"><p><i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@data.Likes</label></p><p></p>@TextModel.Context["your rate"]:<label style="color: yellow" id="yourRate"></label></div>');
+                    document.getElementById('likes').insertAdjacentHTML("afterbegin", '<div style="float: right" id="likes"><p><i class="bi bi-heart" id="heart" onclick="like();"></i>     @TextModel.Context["likes"]<label id="likesCount">@Model.First().Likes.Count()</label></p><p></p>@TextModel.Context["your rate"]:<label style="color: yellow" id="yourRate"></label></div>');
                     getUserRate('@userRate.ToString()', 'yourRate');
                     let stars = document.getElementById('yourRate').querySelectorAll("i");
                     stars.forEach((star, i) => {
@@ -59,11 +51,11 @@
             <p></p>
             <h4>@TextModel.Context["comments"]</h4>
             <table class="table" id="Comments">
-                @foreach (var comment in Model.SelectReviewComments(data.Id))
+                @foreach (var comment in Model.First().Comments)
                 {
                     <tr>
                         <td style="width: 40%">
-                            @comment.UserName  (<i style="color: green">@comment.UserLikes</i>):
+                            @comment.Author.UserName  (<i style="color: green">@comment.Author.Reviews.Sum(r => r.Likes.Count())</i>):
                             <p style="color: grey">@comment.Date.ToShortDateString()</p>
                         </td>
                         <td align="left" style="width: 60%">
@@ -75,21 +67,21 @@
             <script>
                 function generatePDF() {
                     if (siteColor == 'black') {
-                        document.getElementById('@data.Id').style.color = 'black';
+                        document.getElementById('@Model.First().Id').style.color = 'black';
                     }
                     let likes = document.getElementById('likes');
                     likes.style.display = 'none';
-                    let element = document.getElementById('@data.Id');
+                    let element = document.getElementById('@Model.First().Id');
                     let clone = element.cloneNode(true);
                     likes.style.display = 'block';
                     let opt = {
-                        filename: 'review@(data.Id).pdf',
+                        filename: 'review@(Model.First().Id).pdf',
                     }
                     html2pdf()
                         .set(opt)
                         .from(clone)
                         .save();
-                    document.getElementById('@data.Id').style.color = 'inherit';
+                    document.getElementById('@Model.First().Id').style.color = 'inherit';
                 }
 
                 function updateComments() {
@@ -100,8 +92,8 @@
                             dataType: 'html',
                             data: {
                                 currentCommentsCount: document.getElementById('Comments').getElementsByTagName('tr').length,
-                                reviewId: @data.Id
-                                             },
+                                reviewId: @Model.First().Id
+                            },
                             success: function (comment) {
                                 document.getElementById('Comments').insertAdjacentHTML("beforeend", comment);
                             },
@@ -130,7 +122,7 @@
         }
     </div>
     @{
-        List<Review> sameReviews = Model.Reviews.Where(review => review.CreationName == data.CreationName && review.Id != data.Id).ToList();
+        var sameReviews = Model.Skip(1).ToList();
         if (sameReviews.Count != 0)
         {
             <h3>@TextModel.Context["same reviews"]</h3>
@@ -141,16 +133,7 @@
                         <tr>
                             <td><button type="submit" class="btn btn-primary" name="review" value="@review.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
                             <td id="@review.Id" align="left" style="width: 80%">
-                                @{
-                                    user = await ViewData.Model.GetUserByIdAsync(review.AuthorId.ToString());
-                                    ViewData.Add("authorName", user.UserName);
-                                    ViewData.Add("likes", user.Likes);
-                                    ViewData.Add("reviewTags", string.Join(' ', await ViewData.Model.SelectReviewTags(review.Id)));
-                                    <partial name="../Review/ReviewData" model="review" view-data="ViewData" />
-                                    ViewData.Remove("authorName");
-                                    ViewData.Remove("likes");
-                                    ViewData.Remove("reviewTags");
-                                }
+                                <partial name="../Review/ReviewData" model="review" view-data="ViewData" />
                             </td>
                         </tr>
                     }

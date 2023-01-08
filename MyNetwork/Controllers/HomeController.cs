@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Korzh.EasyQuery.Linq;
+using Microsoft.EntityFrameworkCore;
 using MyNetwork.Models;
+using MyNetwork.Services;
 using System.Diagnostics;
 using System.Web;
 
@@ -7,24 +10,24 @@ namespace MyNetwork.Controllers
 {
     public class HomeController : Controller
     {
-        private ApplicationContext db;
+        private ApplicationContext _db;
         private static string _category = "all";
         private static string _searchType = "best views";
         private static List<string> _tags = new List<string>();
 
         public HomeController(ApplicationContext db)
         {
-            this.db = db;
+            _db = db;
         }
 
         public async Task<IActionResult> Index()
         {
             await setParamsAsync();
-            ViewData.Model = db;
+            ViewData.Model = _db;
             ViewData.Add("category", _category);
             ViewData.Add("searchType", _searchType);
             ViewData.Add("tags", string.Join(' ', _tags));
-            ViewData.Add("popular tags", string.Join(' ', db.SelectPopularTags()));
+            ViewData.Add("popular tags", string.Join(' ', _db.Services.Tags.SelectPopularTags()));
             return View();
         }
 
@@ -69,15 +72,31 @@ namespace MyNetwork.Controllers
         public IActionResult ChangeReviewParameters(string category, string searchTupe, string[]? tags = null)
         {
             _category = category;
-           _searchType = searchTupe;
+            _searchType = searchTupe;
             if (searchTupe == "tags" && tags != null) _tags = tags.Skip(1).Distinct().Select(tag => HttpUtility.UrlEncode(tag)).ToList();
             else _tags = new List<string>();
             return RedirectToAction("Index", "Home");
         }
 
-        public IActionResult FullTextSearch(string searchString)
+        public async Task<IActionResult> FullTextSearch(string searchString)
         {
-            ViewData.Model = db;
+            List<Review> searchResults = new List<Review>();
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                var fullDataReview = await _db.Services.Reviews.GetFullReviewData();
+                List<Review> reviews = await _db.Reviews.FullTextSearchQuery(searchString).ToListAsync();
+                searchResults.AddRange(fullDataReview.Where(r => reviews.Contains(r)));
+                List<Creation> creations = await _db.Creations.FullTextSearchQuery(searchString).ToListAsync();
+                searchResults.AddRange(fullDataReview.Where(r => creations.Contains(r.Creation)));
+                List<string> users = await _db.AspNetUsers.FullTextSearchQuery(searchString).Select(user => user.Id).ToListAsync();
+                searchResults.AddRange(fullDataReview.Where(review => users.Contains(review.AuthorId)));
+                List<int> comments = await _db.Comments.FullTextSearchQuery(searchString).Select(comment => comment.ReviewId).ToListAsync();
+                searchResults.AddRange(fullDataReview.Where(review => comments.Contains(review.Id)));
+                List<int> tags = await _db.Tags.FullTextSearchQuery(searchString).Select(tag => tag.Id).ToListAsync();
+                tags = await _db.ReviewTags.Where(reviewTag => tags.Contains(reviewTag.TagId)).Select(tag => tag.ReviewId).ToListAsync();
+                searchResults.AddRange(fullDataReview.Where(review => tags.Contains(review.Id)));
+            }
+            ViewData.Model = searchResults.Distinct().ToList();
             ViewData.Add("searchString", searchString == null ? "" : searchString);
             return View();
         }
@@ -86,8 +105,8 @@ namespace MyNetwork.Controllers
         {
             if (ImageService.getToken() == "")
             {
-                ImageService.setToken(db.AdminDatas.FirstOrDefault(data => data.Name == "token") == null ? "" : 
-                    db.AdminDatas.FirstOrDefault(data => data.Name == "token").Value);
+                ImageService.setToken(_db.AdminDatas.FirstOrDefault(data => data.Name == "token") == null ? "" :
+                    _db.AdminDatas.FirstOrDefault(data => data.Name == "token").Value);
             }
             if (Response.HttpContext.Request.Cookies["language"] == null)
             {
@@ -106,7 +125,7 @@ namespace MyNetwork.Controllers
             }
             else if (CurrentUserSettings.CurrentUser.UserName == null)
             {
-                CurrentUserSettings.CurrentUser = await db.FindUserByNameAsync(User.Identity?.Name!);
+                CurrentUserSettings.CurrentUser = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == User.Identity.Name);
             }
         }
     }

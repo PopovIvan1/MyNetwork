@@ -1,6 +1,8 @@
-﻿<div class="text-center">
+﻿@model User
+
+<div class="text-center">
     @{
-        int userLikes = (await ViewData.Model.FindUserByNameAsync(ViewData["username"]?.ToString())).Likes;
+        int userLikes = Model.Reviews.Sum(r => r.Likes.Count());
     }
     <script>
         document.getElementById('searchForm').insertAdjacentHTML("beforeend", '<p><div style="float: right">@TextModel.Context["your likes"] @userLikes</div></p>');
@@ -57,8 +59,14 @@
         document.getElementById('sortOrderSelector').value = "@ViewData["sortOrder"]?.ToString()";
     </script>
 </form>
+@{
+    var reviews = ViewData["category"]?.ToString() == "all" ? Model.Reviews
+                : Model.Reviews.Where(review => review.Category == @ViewData["category"]?.ToString()).ToList();
+    var sortedReviews = ViewData["sortOrder"]?.ToString() == "date" ? reviews.OrderByDescending(review => review.Date).ToList()
+        : ViewData["sortOrder"]?.ToString() == "popular" ? reviews.OrderByDescending(review => review.Rates.Average(r => r.UserRate)).ToList() : Model.Reviews;
+}
 <table class="table" style="border-style: solid; border-color: red;">
-    @foreach (var data in await ViewData.Model.SelectUserReviews(ViewData["username"]?.ToString(), ViewData["category"]?.ToString(), ViewData["sortOrder"]?.ToString()))
+    @foreach (var data in sortedReviews)
     {
         <tr>
             <td>
@@ -75,16 +83,7 @@
                 </form>
             </td>
             <td id="@data.Id" align="left" style="width: 80%">
-                @{
-                    User user = await ViewData.Model.GetUserByIdAsync(data.AuthorId.ToString());
-                    ViewData.Add("authorName", user.UserName);
-                    ViewData.Add("likes", user.Likes);
-                    ViewData.Add("reviewTags", string.Join(' ', await ViewData.Model.SelectReviewTags(data.Id)));
-                    <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
-                    ViewData.Remove("authorName");
-                    ViewData.Remove("likes");
-                    ViewData.Remove("reviewTags");
-                }
+                <partial name="../Review/ReviewData" model="data" view-data="ViewData" />
             </td>
         </tr>
     }

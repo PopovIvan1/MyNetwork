@@ -27,7 +27,7 @@
                                     let $self = files[i],
                                         fr = new FileReader();
                                     fr.onload = function (e) {
-                                        load.insertAdjacentHTML('beforeEnd', `<img src="${e.srcElement.result}" width="30%"/>`);
+                                        load.insertAdjacentHTML('beforeEnd', `<img src="${e.srcElement.result}" width="30%" style="min-width: 150px"/>`);
                                         document.getElementById('dropZone').innerHTML += e.srcElement.result;
                                     }
                                     fr.readAsDataURL(files[i]);
@@ -53,11 +53,11 @@
                     <input id="creationName" name="creationName" class="form-control" required aria-required="true" oninvalid="this.setCustomValidity('@TextModel.Context["message error"]')" oninput="this.setCustomValidity('')" />
                     <label class="form-label">@TextModel.Context["creation name"]</label>
                 </div>
+                @TextModel.Context["add tags"]:
+                <p></p>
                 <div class="form-floating" id="tags">
-                    @TextModel.Context["add tags"]:
-                    <p></p>
                     <div class="form-floating" style="color:black;" id="tagContent">
-                        <input name="tags" class="form-control" aria-required="true" onchange="addTagLabel();" id="tag" list="dataList" />
+                        <input name="tags" class="form-control" aria-required="true" onchange="addTagLabel('#tagContent');" id="tag" list="dataList" />
                         <label class="form-label">@TextModel.Context["add tag"]</label>
                     </div>
                 </div>

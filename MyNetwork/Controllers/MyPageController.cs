@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MyNetwork.Models;
 
 
@@ -7,30 +8,30 @@ namespace MyNetwork.Controllers
 {
     public class MyPageController : Controller
     {
-        private ApplicationContext db;
-        private static string category = "all";
-        private static string sortOrder = "no sort";
+        private ApplicationContext _db;
+        private static string _category = "all";
+        private static string _sortOrder = "no sort";
         private readonly SignInManager<IdentityUser> _signInManager;
 
         public MyPageController(ApplicationContext db, SignInManager<IdentityUser> signInManager)
         {
             _signInManager = signInManager;
-            this.db = db;
+            _db = db;
         }
 
-        public IActionResult MyPage()
+        public async Task<IActionResult> MyPage()
         {
             if (CurrentUserSettings.AdminMode == "") CurrentUserSettings.AdminMode = CurrentUserSettings.CurrentUser.IsAdmin == "No        " ? "not available" : "available";
-            ViewData.Model = db;
-            ViewData.Add("username", CurrentUserSettings.CurrentUser.UserName);
-            ViewData.Add("category", category);
-            ViewData.Add("sortOrder", sortOrder);
+            ViewData.Model = await _db.Services.Users.GetFullUserData
+                (await _db.AspNetUsers.FirstOrDefaultAsync(user => user.Id == CurrentUserSettings.CurrentUser.Id));
+            ViewData.Add("category", _category);
+            ViewData.Add("sortOrder", _sortOrder);
             return View();
         }
 
         public IActionResult AdminMode()
         {
-            ViewData.Model = db.AspNetUsers;
+            ViewData.Model = _db.AspNetUsers;
             return View();
         }
 
@@ -55,41 +56,42 @@ namespace MyNetwork.Controllers
         {
             if (selectedUser != null)
             {
-                CurrentUserSettings.CurrentUser = await db.FindUserByNameAsync(selectedUser);
-                CurrentUserSettings.AdminMode = TextModel.Context["in admin mode"] + CurrentUserSettings.CurrentUser;
+                CurrentUserSettings.CurrentUser = await _db.Services.Users.GetFullUserData
+                (await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == selectedUser));
+                CurrentUserSettings.AdminMode = TextModel.Context["in admin mode"] + CurrentUserSettings.CurrentUser.UserName;
             }
             return RedirectToAction("MyPage", "MyPage");
         }
 
         public IActionResult ChangeParameters(string categoryFromView, string sortOrderFromView)
         {
-            category = categoryFromView;
-            sortOrder = sortOrderFromView;
+            _category = categoryFromView;
+            _sortOrder = sortOrderFromView;
             return RedirectToAction("MyPage", "MyPage");
         }
 
         public async Task<IActionResult> DeleteProfile(string userId = "")
         {
             User currentUser;
-            if (!string.IsNullOrEmpty(userId)) currentUser = await db.GetUserByIdAsync(userId);
+            if (!string.IsNullOrEmpty(userId)) currentUser = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.Id == userId);
             else currentUser = CurrentUserSettings.CurrentUser;
             await checkAdminMode(currentUser);
-            await db.RemoveUser(currentUser);
+            await _db.Services.Users.RemoveUser(currentUser);
             return RedirectToAction("Index", "Home");
         }
 
         public async Task<IActionResult> MakeAdmin(string userId)
         {
-            (await db.GetUserByIdAsync(userId)).IsAdmin = "admin";
-            db.SaveChanges();
+            (await _db.AspNetUsers.FirstOrDefaultAsync(user => user.Id == userId)).IsAdmin = "admin";
+            _db.SaveChanges();
             return RedirectToAction("AdminMode", "MyPage");
         }
 
         public async Task<IActionResult> BlockUser(string userId)
         {
-            User currentUser = await db.GetUserByIdAsync(userId);
+            User currentUser = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.Id == userId);
             currentUser.IsBlock = currentUser.IsBlock == "block" ? "" : "block";
-            db.SaveChanges();
+            _db.SaveChanges();
             return RedirectToAction("AdminMode", "MyPage");
         }
 
@@ -110,7 +112,7 @@ namespace MyNetwork.Controllers
         private async Task setAdminSettingsAsync()
         {
             CurrentUserSettings.AdminMode = "available";
-            CurrentUserSettings.CurrentUser = await db.FindUserByNameAsync(User.Identity?.Name!);
+            CurrentUserSettings.CurrentUser = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == User.Identity.Name);
         }
     }
 }

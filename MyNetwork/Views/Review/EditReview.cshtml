@@ -1,11 +1,9 @@
-﻿@model ApplicationContext
+﻿@model Review
 @using System;
 @using System.Web;
 @using System.IO;
+@using MyNetwork.Services;
 
-@{
-    Review data = Model.Reviews.FirstOrDefault(review => review.Id == (int)ViewData["reviewId"]);
-}
 <form asp-controller="MyPage" asp-action="BackToMyPage" class="form-horizontal">
     <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-square"></i> @TextModel.Context["back to your page"]</button>
 </form>
@@ -13,42 +11,50 @@
     <h1 class="display-4"><i class="bi bi-pen"></i> @TextModel.Context["edit"]</h1>
 </div>
 @{
-    ViewData.Add("description", data.Description);
-    <partial name="../Review/CreationReview" model="ViewData.Model.Tags" view-data="ViewData" />
+    ViewData.Add("description", Model.Description);
+    <partial name="../Review/CreationReview" model="Model.Tags.Select(tag => tag.Tag)" view-data="ViewData" />
     ViewData.Remove("description");
 }
 <script>
     document.getElementById('button').value = 'updateReview';
     document.getElementById('buttonText').innerHTML = '@TextModel.Context["save changes"]';
-    document.getElementById('reviewName').value = '@data.Name';
-    document.getElementById('creationName').value = '@data.CreationName';
-    document.getElementById('selector').value = "@data.Category";
-    document.getElementById('number').value = "@data.AuthorRate";
+    document.getElementById('selector').value = "@Model.Category";
+    document.getElementById('number').value = "@Model.AuthorRate";
 </script>
-@if (data.ImageUrl != "")
+@if (Model.ImageUrl != "")
 {
     <script>
         document.querySelector('#image').innerHTML = '';
     </script>
-    foreach (var imgName in data.ImageUrl.Split(' '))
+    foreach (var imgName in Model.ImageUrl.Split(' '))
     {
         if (imgName != "")
         {
             byte[] imgBytes = await ImageService.Download(imgName);
             string str = Convert.ToBase64String(imgBytes);
             <script>
-                document.querySelector('#image').insertAdjacentHTML("beforeend", '<img style="width: 30%;" src="data:image/*;base64,@str" alt="Red dot" />');
+                document.querySelector('#image').insertAdjacentHTML("beforeend", '<img style="width: 30%; min-width: 150px" src="data:image/*;base64,@str" alt="Red dot" />');
             </script>
         }
     }
 }
-@foreach (var tag in await ViewData.Model.SelectReviewTags(data.Id))
+@foreach (var tag in Model.Tags)
 {
     <script>
-        var str = "@HttpUtility.UrlEncode(tag.Replace(" ", "\u00A0"))";
+        var str = "@HttpUtility.UrlEncode(tag.Tag.Name.Replace(" ", "\u00A0"))";
         str = decodeURI(str);
         str = str.replaceAll("%2f", "/").replaceAll("%26nbsp%3b", " ");
         document.getElementById('tag').value = str;
         addTagLabel();
     </script>
 }
+<script>
+    var str = "@HttpUtility.UrlEncode(Model.Name.Replace(" ", "\u00A0"))";
+    str = decodeURI(str);
+    str = str.replaceAll("%2f", "/").replaceAll("%26nbsp%3b", " ");
+    document.getElementById('reviewName').value = str;
+    str = "@HttpUtility.UrlEncode(Model.Creation.Name.Replace(" ", "\u00A0"))";
+    str = decodeURI(str);
+    str = str.replaceAll("%2f", "/").replaceAll("%26nbsp%3b", " ");
+    document.getElementById('creationName').value = str;
+</script>
