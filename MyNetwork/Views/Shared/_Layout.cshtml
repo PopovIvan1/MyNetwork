@@ -138,3 +138,15 @@ else
 {
     <script>siteColor = 'white';</script>
 }
+@if (SignInManager.IsSignedIn(User))
+{
+    <script>
+        $.ajax({
+            url: "/MyPage/CheckUserStatus",
+            method: 'GET',
+            data: {
+                userName: '@User.Identity.Name'
+            }
+        });
+    </script>
+}

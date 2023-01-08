@@ -55,8 +55,6 @@
     <p>@TextModel.Context["description"]</p>
     <script>
         var str = "@HttpUtility.UrlEncode(Model.Description.Replace(" ", "\u00A0"))";
-        str = decodeURI(str);
-        str = str.replaceAll("%2f", "/").replaceAll("%26nbsp%3b", " ");
-        document.getElementById('@Model.Id').insertAdjacentHTML("beforeend", str);
+        document.getElementById('@Model.Id').insertAdjacentHTML("beforeend", decodeString(str));
     </script>
 }

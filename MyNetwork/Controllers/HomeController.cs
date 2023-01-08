@@ -108,10 +108,13 @@ namespace MyNetwork.Controllers
                 ImageService.setToken(_db.AdminDatas.FirstOrDefault(data => data.Name == "token") == null ? "" :
                     _db.AdminDatas.FirstOrDefault(data => data.Name == "token").Value);
             }
-            if (Response.HttpContext.Request.Cookies["language"] == null)
+            if (Response.HttpContext.Request.Cookies["language"] == "ru")
+            {   
+                TextModel.setContext("ru");
+            }
+            else
             {
-                if (Response.HttpContext.Request.Cookies["language"] == "ru") TextModel.setContext("ru");
-                else TextModel.setContext("en");
+                TextModel.setContext("en");
             }
             await setUserSettings();
         }

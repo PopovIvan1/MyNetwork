@@ -7,6 +7,12 @@ function uploadImage() {
     });
 }
 
+function decodeString(str) {
+    str = decodeURI(str);
+    str = str.replaceAll("%2f", "/").replaceAll("%26nbsp%3b", " ");
+    return str;
+}
+
 function addTagLabel(id) {
     let isEmptyTags = 0;
     let tags = document.querySelectorAll(id);

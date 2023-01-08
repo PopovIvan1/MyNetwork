@@ -14,9 +14,7 @@
 
 <script>
     var str = "@HttpUtility.UrlEncode(searchString.Replace(" ", "\u00A0"))";
-    str = decodeURI(str);
-    str = str.replaceAll("%2f", "/").replaceAll("%26nbsp%3b", " ");
-    document.getElementById('searchInput').value = str;
+    document.getElementById('searchInput').value = decodeString(str);
 </script>
 
 <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">

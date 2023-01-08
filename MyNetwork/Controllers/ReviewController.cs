@@ -63,21 +63,14 @@ namespace MyNetwork.Controllers
         {
             await _db.Services.Tags.RemoveTags(_currentReview.Id);
             Review currentReview = await _db.Reviews.Include(review => review.Creation).FirstOrDefaultAsync(review => review.Id == _currentReview.Id);
-            string imgName = await ImageService.GetImageName(image);
-            if (!string.IsNullOrEmpty(imgName))
-            {
-                if (currentReview.ImageUrl != "" ) await ImageService.Remove(currentReview.ImageUrl);
-                currentReview.ImageUrl = imgName;
-            }
-            else if (isImageDeleted == "yes")
-            {
-                await ImageService.Remove(currentReview.ImageUrl);
-                currentReview.ImageUrl = "";
-            }
+            currentReview.ImageUrl = await getImgUrl(currentReview.ImageUrl, isImageDeleted, image);
             int oldCreation = currentReview.CreationId;
             Creation creation = await _db.Services.Creations.GetCreation(creationName);
-            currentReview.Creation = creation;
-            currentReview.CreationId = creation.Id;
+            if (oldCreation != creation.Id)
+            {
+                currentReview.Creation = creation;
+                currentReview.CreationId = creation.Id;
+            }
             currentReview.Name = reviewName;
             currentReview.Category = category;
             currentReview.Description = description;
@@ -156,6 +149,22 @@ namespace MyNetwork.Controllers
             }
             else currentRate.UserRate = rate;
             _db.SaveChanges();
+        }
+
+        private async Task<string> getImgUrl(string imgUrl, string isDeleted, IFormFile[] image)
+        {
+            string imgName = await ImageService.GetImageName(image);
+            if (!string.IsNullOrEmpty(imgName))
+            {
+                if (imgUrl != "") await ImageService.Remove(imgUrl);
+                imgUrl = imgName;
+            }
+            else if (isDeleted == "yes")
+            {
+                await ImageService.Remove(imgUrl);
+                imgUrl = "";
+            }
+            return imgUrl;
         }
     }
 }

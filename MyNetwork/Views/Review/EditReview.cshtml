@@ -50,11 +50,7 @@
 }
 <script>
     var str = "@HttpUtility.UrlEncode(Model.Name.Replace(" ", "\u00A0"))";
-    str = decodeURI(str);
-    str = str.replaceAll("%2f", "/").replaceAll("%26nbsp%3b", " ");
-    document.getElementById('reviewName').value = str;
+    document.getElementById('reviewName').value = decodeString(str);
     str = "@HttpUtility.UrlEncode(Model.Creation.Name.Replace(" ", "\u00A0"))";
-    str = decodeURI(str);
-    str = str.replaceAll("%2f", "/").replaceAll("%26nbsp%3b", " ");
-    document.getElementById('creationName').value = str;
+    document.getElementById('creationName').value = decodeString(str);
 </script>

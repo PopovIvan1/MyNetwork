@@ -95,6 +95,15 @@ namespace MyNetwork.Controllers
             return RedirectToAction("AdminMode", "MyPage");
         }
 
+        public async Task CheckUserStatus(string userName)
+        {
+            User user = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == userName);
+            if (user == null || user.IsBlock == "block")
+            {
+                await _signInManager.SignOutAsync();
+            }
+        }
+
         private async Task checkAdminMode(User currentUser)
         {
             if (currentUser.UserName == User?.Identity!.Name)
