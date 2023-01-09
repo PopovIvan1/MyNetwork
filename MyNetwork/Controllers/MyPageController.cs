@@ -9,8 +9,6 @@ namespace MyNetwork.Controllers
     public class MyPageController : Controller
     {
         private ApplicationContext _db;
-        private static string _category = "all";
-        private static string _sortOrder = "no sort";
         private readonly SignInManager<IdentityUser> _signInManager;
 
         public MyPageController(ApplicationContext db, SignInManager<IdentityUser> signInManager)
@@ -21,11 +19,13 @@ namespace MyNetwork.Controllers
 
         public async Task<IActionResult> MyPage()
         {
-            if (CurrentUserSettings.AdminMode == "") CurrentUserSettings.AdminMode = CurrentUserSettings.CurrentUser.IsAdmin == "No        " ? "not available" : "available";
+            if (string.IsNullOrEmpty(Response.HttpContext.Request.Cookies["adminMode"]))
+            {
+                User user = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == Response.HttpContext.Request.Cookies["currentUser"]);
+                Response.Cookies.Append("adminMode", user.IsAdmin == "No        " ? "not available" : "available");
+            }
             ViewData.Model = await _db.Services.Users.GetFullUserData
-                (await _db.AspNetUsers.FirstOrDefaultAsync(user => user.Id == CurrentUserSettings.CurrentUser.Id));
-            ViewData.Add("category", _category);
-            ViewData.Add("sortOrder", _sortOrder);
+                (await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == Response.HttpContext.Request.Cookies["currentUser"]));
             return View();
         }
 
@@ -56,17 +56,16 @@ namespace MyNetwork.Controllers
         {
             if (selectedUser != null)
             {
-                CurrentUserSettings.CurrentUser = await _db.Services.Users.GetFullUserData
-                (await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == selectedUser));
-                CurrentUserSettings.AdminMode = TextModel.Context["in admin mode"] + CurrentUserSettings.CurrentUser.UserName;
+                Response.Cookies.Append("currentUser", selectedUser);
+                Response.Cookies.Append("adminMode", TextModel.Context["in admin mode"] + selectedUser);
             }
             return RedirectToAction("MyPage", "MyPage");
         }
 
         public IActionResult ChangeParameters(string categoryFromView, string sortOrderFromView)
         {
-            _category = categoryFromView;
-            _sortOrder = sortOrderFromView;
+            Response.Cookies.Append("myPageCategory", categoryFromView);
+            Response.Cookies.Append("myPageSortOrder", sortOrderFromView);
             return RedirectToAction("MyPage", "MyPage");
         }
 
@@ -74,7 +73,7 @@ namespace MyNetwork.Controllers
         {
             User currentUser;
             if (!string.IsNullOrEmpty(userId)) currentUser = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.Id == userId);
-            else currentUser = CurrentUserSettings.CurrentUser;
+            else currentUser = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == Response.HttpContext.Request.Cookies["currentUser"]);
             await checkAdminMode(currentUser);
             await _db.Services.Users.RemoveUser(currentUser);
             return RedirectToAction("Index", "Home");
@@ -109,8 +108,8 @@ namespace MyNetwork.Controllers
             if (currentUser.UserName == User?.Identity!.Name)
             {
                 await _signInManager.SignOutAsync();
-                CurrentUserSettings.CurrentUser = new User();
-                CurrentUserSettings.AdminMode = "";
+                Response.Cookies.Append("currentUser", "");
+                Response.Cookies.Append("adminMode", "");
             }
             else
             {
@@ -120,8 +119,8 @@ namespace MyNetwork.Controllers
 
         private async Task setAdminSettingsAsync()
         {
-            CurrentUserSettings.AdminMode = "available";
-            CurrentUserSettings.CurrentUser = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == User.Identity.Name);
+            Response.Cookies.Append("adminMode", "available");
+            Response.Cookies.Append("currentUser", User.Identity.Name);
         }
     }
 }

@@ -20,16 +20,20 @@ namespace MyNetwork.Services
 
         public async Task RemoveUser(User user)
         {
-            await _db.Comments.Where(comment => comment.UserId == user.Id).ForEachAsync(comment => _db.Comments.Remove(comment));
-            await _db.Likes.Where(like => like.UserId == user.Id).ForEachAsync(like => _db.Likes.Remove(like));
-            await _db.Rates.Where(rate => rate.UserId == user.Id).ForEachAsync(rate => _db.Rates.Remove(rate));
-            var reviews = await _db.Reviews.Where(review => review.AuthorId == user.Id).ToListAsync(); 
-            foreach(var review in reviews)
+            User fullUser = await _db.AspNetUsers.Include(u => u.Comments).Include(u => u.Likes)
+                .Include(u => u.Rates).Include(u => u.Reviews).FirstOrDefaultAsync(u => u.Id == user.Id);
+            if (fullUser != null)
             {
-                await _db.Services.Reviews.RemoveReview(review);
+                var reviews = await _db.Reviews.Where(review => review.AuthorId == user.Id).ToListAsync();
+                foreach (var review in reviews)
+                {
+                    await _db.Services.Reviews.RemoveReview(review);
+                    _db.SaveChanges();
+                }
+                _db.AspNetUsers.Remove(fullUser);
+                _db.Services.Tags.RemoveTags();
+                _db.SaveChanges();
             }
-            _db.AspNetUsers.Remove(_db.AspNetUsers.FirstOrDefault(u => u.Id == user.Id));
-            _db.SaveChanges();
         }
     }
 }

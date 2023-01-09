@@ -22,6 +22,9 @@ namespace MyNetwork.Services
 
         public async Task<List<Review>> SelectReviewsWithSettings(string category, string searchType, string tags)
         {
+            if (string.IsNullOrEmpty(category)) category = "all";
+            if (string.IsNullOrEmpty(searchType)) searchType = "last views";
+            if (string.IsNullOrEmpty(tags)) tags = "";
             List<string> tagsToList = tags.Split(' ').ToList();
             List<Review> fullReviews = await GetFullReviewData();
             var reviewsWithCurrentCategory = category == "all" ? fullReviews
@@ -38,13 +41,15 @@ namespace MyNetwork.Services
         public async Task RemoveReview(Review currentReview)
         {
             if (!string.IsNullOrEmpty(currentReview.ImageUrl)) await ImageService.Remove(currentReview.ImageUrl);
-            await _db.Rates.Where(rate => rate.ReviewId == currentReview.Id).ForEachAsync(rate => _db.Rates.Remove(rate));
-            await _db.Likes.Where(like => like.ReviewId == currentReview.Id).ForEachAsync(like => _db.Likes.Remove(like));
-            await _db.Comments.Where(comment => comment.ReviewId == currentReview.Id).ForEachAsync(comment => _db.Comments.Remove(comment));
-            await _db.Services.Tags.RemoveTags(currentReview.Id);
-            _db.Reviews.Remove(currentReview);
-            _db.SaveChanges();
-            await _db.Services.Creations.CheckOldCreation(currentReview.CreationId);
+            Review fullReview = await _db.Reviews.Include(r => r.Likes)
+                .Include(r => r.Rates).Include(r => r.Comments)
+                .FirstOrDefaultAsync(review => review.Id == currentReview.Id);
+            if (fullReview != null)
+            {
+                _db.Reviews.Remove(fullReview);
+                _db.SaveChanges();
+                await _db.Services.Creations.CheckOldCreation(currentReview.CreationId);
+            }
         }
 
         private async Task<List<Review>> getReviewsByTags(List<Review> reviewsWithCurrentCategory, List<string> tags)

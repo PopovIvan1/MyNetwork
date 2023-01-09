@@ -8,7 +8,6 @@ namespace MyNetwork.Controllers
     public class ReviewController : Controller
     {
         private ApplicationContext _db;
-        private static Review _currentReview = new Review();
 
         public ReviewController(ApplicationContext db)
         {
@@ -31,7 +30,7 @@ namespace MyNetwork.Controllers
         {
             if (User.Identity.IsAuthenticated)
             {
-                ViewData.Add("userId", CurrentUserSettings.CurrentUser.Id);
+                ViewData.Add("userId", (await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == Response.HttpContext.Request.Cookies["currentUser"])).Id);
             }
             List<Review> viewModel = new List<Review>();
             Review currentReview = (await _db.Services.Reviews.GetFullReviewData()).FirstOrDefault(r => r.Id == int.Parse(review));
@@ -40,7 +39,7 @@ namespace MyNetwork.Controllers
             viewModel.Add(currentReview);
             viewModel.AddRange((await _db.Services.Reviews.GetFullReviewData()).Where(r => r.CreationId == currentReview.CreationId && r.Id != currentReview.Id));
             ViewData.Model = viewModel;
-            _currentReview = currentReview;
+            Response.Cookies.Append("currentReview", currentReview.Id.ToString());
             return View();
         }
 
@@ -48,7 +47,7 @@ namespace MyNetwork.Controllers
         {
             Review currentReview = (await _db.Services.Reviews.GetFullReviewData()).FirstOrDefault(r => r.Id == int.Parse(review));
             ViewData.Model = currentReview;
-            _currentReview = currentReview;
+            Response.Cookies.Append("currentReview", currentReview.Id.ToString());
             return View();
         }
 
@@ -61,8 +60,8 @@ namespace MyNetwork.Controllers
 
         public async Task<IActionResult> UpdateReview(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile[] image, string isImageDeleted)
         {
-            await _db.Services.Tags.RemoveTags(_currentReview.Id);
-            Review currentReview = await _db.Reviews.Include(review => review.Creation).FirstOrDefaultAsync(review => review.Id == _currentReview.Id);
+            Review currentReview = (await _db.Services.Reviews.GetFullReviewData()).FirstOrDefault(review => review.Id == int.Parse(Response.HttpContext.Request.Cookies["currentReview"]));
+            currentReview.Tags.ToList().ForEach(tag => _db.ReviewTags.Remove(tag));
             currentReview.ImageUrl = await getImgUrl(currentReview.ImageUrl, isImageDeleted, image);
             int oldCreation = currentReview.CreationId;
             Creation creation = await _db.Services.Creations.GetCreation(creationName);
@@ -79,19 +78,27 @@ namespace MyNetwork.Controllers
             currentReview.Tags.ToList().AddRange(await _db.Services.Tags.SetTagsToDb(tags, currentReview));
             _db.SaveChanges();
             _db.Services.Rates.UpdateRates(currentReview.Id, currentReview.Creation.Id);
-            await _db.Services.Creations.CheckOldCreation(oldCreation);
+            if (oldCreation != creation.Id) await _db.Services.Creations.CheckOldCreation(oldCreation);
+            _db.Services.Tags.RemoveTags();
+            _db.SaveChanges();
             return RedirectToAction("MyPage", "MyPage");
         }
 
         public async Task<IActionResult> AddReviewToDbAsync(string reviewName, string creationName, string[] tags, string category, string description, string rate, IFormFile[] image)
         {
+            User currentUser = await getCurrentUser();
             if (description.Contains(TextModel.Context["typing description"])) description = "";
             string imgName = await ImageService.GetImageName(image);
             Creation creation = await _db.Services.Creations.GetCreation(creationName);
+            try
+            {
+                _db.Creations.Attach(creation);
+            }
+            catch(Exception ex) { }
             Review review = new Review() { Name = reviewName, Creation = creation, Category = category, Date = DateTime.Now, Description = description, AuthorRate = int.Parse(rate), ImageUrl = imgName };
-            CurrentUserSettings.CurrentUser.Reviews.ToList().Add(review);
-            review.Author = CurrentUserSettings.CurrentUser;
-            review.AuthorId = CurrentUserSettings.CurrentUser.Id;
+            currentUser.Reviews.ToList().Add(review);
+            review.Author = currentUser;
+            review.AuthorId = currentUser.Id;
             _db.Reviews.Attach(review);
             _db.SaveChanges();
             review.Tags.ToList().AddRange(await _db.Services.Tags.SetTagsToDb(tags, review));
@@ -99,13 +106,15 @@ namespace MyNetwork.Controllers
             return RedirectToAction("MyPage", "MyPage");
         }
 
-        public IActionResult NewComment(string commentContext)
+        public async Task<IActionResult> NewComment(string commentContext)
         {
-            Comment comment = new Comment { ReviewId = _currentReview.Id, Context = commentContext, Date = DateTime.Now, UserId = CurrentUserSettings.CurrentUser.Id, Author = CurrentUserSettings.CurrentUser, Review = _currentReview };
+            User currentUser = await getCurrentUser();
+            Review review = (await _db.Services.Reviews.GetFullReviewData()).FirstOrDefault(review => review.Id == int.Parse(Response.HttpContext.Request.Cookies["currentReview"]));
+            Comment comment = new Comment { ReviewId = review.Id, Context = commentContext, Date = DateTime.Now, UserId = currentUser.Id, Author = currentUser, Review = review };
             _db.Comments.Attach(comment);
-            _currentReview.Comments.ToList().Add(comment);
+            review.Comments.ToList().Add(comment);
             _db.SaveChanges();
-            return RedirectToAction("ReviewPage", "Review", new { review = _currentReview.Id.ToString() });
+            return RedirectToAction("ReviewPage", "Review", new { review = review.Id.ToString() });
         }
 
         public async Task<string> UpdateComments(int currentCommentsCount, int reviewId)
@@ -124,28 +133,32 @@ namespace MyNetwork.Controllers
 
         public async Task LikeReview(int likeOrDislike)
         {
+            User currentUser = await getCurrentUser();
+            Review review = (await _db.Services.Reviews.GetFullReviewData()).FirstOrDefault(review => review.Id == int.Parse(Response.HttpContext.Request.Cookies["currentReview"]));
             if (likeOrDislike == 1)
             {
-                Like like = new Like { ReviewId = _currentReview.Id, UserId = CurrentUserSettings.CurrentUser.Id, Author = CurrentUserSettings.CurrentUser, Review = _currentReview };
+                Like like = new Like { ReviewId = review.Id, UserId = currentUser.Id, Author = currentUser, Review = review };
                 _db.Likes.Attach(like);
-                _currentReview.Likes.ToList().Add(like);
+                review.Likes.ToList().Add(like);
             }
             else
             {
-                _db.Likes.Remove(await _db.Likes.FirstOrDefaultAsync(like => like.UserId == CurrentUserSettings.CurrentUser.Id && like.ReviewId == _currentReview.Id));
+                _db.Likes.Remove(await _db.Likes.FirstOrDefaultAsync(like => like.UserId == currentUser.Id && like.ReviewId == review.Id));
             }
             _db.SaveChanges();
         }
 
         public async Task ChangeCreationRate(int rate, string creationName)
         {
-            Rate currentRate = await _db.Rates.FirstOrDefaultAsync(rate => rate.UserId == CurrentUserSettings.CurrentUser.Id && rate.ReviewId == _currentReview.Id);
+            User currentUser = await getCurrentUser();
+            Review review = (await _db.Services.Reviews.GetFullReviewData()).FirstOrDefault(review => review.Id == int.Parse(Response.HttpContext.Request.Cookies["currentReview"]));
+            Rate currentRate = await _db.Rates.FirstOrDefaultAsync(rate => rate.UserId == currentUser.Id && rate.ReviewId == review.Id);
             if (currentRate == null)
             {
-                Rate newRate = new Rate { UserRate = rate, ReviewId = _currentReview.Id, UserId = CurrentUserSettings.CurrentUser.Id, CreationId = _currentReview.CreationId,
-                Author = CurrentUserSettings.CurrentUser, Review = _currentReview, Creation = _currentReview.Creation};
+                Rate newRate = new Rate { UserRate = rate, ReviewId = review.Id, UserId = currentUser.Id, CreationId = review.CreationId,
+                Author = currentUser, Review = review, Creation = review.Creation};
                 _db.Rates.Attach(newRate);
-                _currentReview.Rates.ToList().Add(newRate);
+                review.Rates.ToList().Add(newRate);
             }
             else currentRate.UserRate = rate;
             _db.SaveChanges();
@@ -165,6 +178,12 @@ namespace MyNetwork.Controllers
                 imgUrl = "";
             }
             return imgUrl;
+        }
+
+        private async Task<User> getCurrentUser()
+        {
+            return await _db.Services.Users.GetFullUserData(await _db.AspNetUsers.
+                FirstOrDefaultAsync(user => user.UserName == Response.HttpContext.Request.Cookies["currentUser"]));
         }
     }
 }

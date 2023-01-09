@@ -35,14 +35,10 @@ namespace MyNetwork.Services
             return reviewTags;
         }
 
-        public async Task RemoveTags(int reviewId)
+        public void RemoveTags()
         {
-            var currentReviewTags = _db.ReviewTags.Where(tag => tag.ReviewId == reviewId).ToList();
-            foreach (var reviewTag in currentReviewTags)
+            foreach (var tag in _db.Tags.Include(t => t.ReviewTags).ToList())
             {
-                Tag tag = await _db.Tags.Include(t => t.ReviewTags).FirstOrDefaultAsync(tag => tag.Id == reviewTag.TagId);
-                _db.ReviewTags.Remove(reviewTag);
-                _db.SaveChanges();
                 if (tag.ReviewTags.Count() == 0) _db.Tags.Remove(tag);
                 _db.SaveChanges();
             }

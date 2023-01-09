@@ -1,4 +1,5 @@
 ﻿@model User
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
 <div class="text-center">
     @{
@@ -23,7 +24,7 @@
         <p></p>
     </div>
     @{
-        if (CurrentUserSettings.AdminMode == "available")
+        if (HttpContextAccessor.HttpContext?.Request.Cookies["adminMode"] == "available" || (string.IsNullOrEmpty(HttpContextAccessor.HttpContext?.Request.Cookies["adminMode"]) && Model.IsAdmin != "No        "))
         {
             <div class="col-md-3">
                 <form asp-controller="MyPage" asp-action="AdminMode" class="form-horizontal">
@@ -54,16 +55,20 @@
         </select>
     </div>
     <p></p>
-    <script>
-        document.getElementById('categorySelector').value = "@ViewData["category"]?.ToString()";
-        document.getElementById('sortOrderSelector').value = "@ViewData["sortOrder"]?.ToString()";
-    </script>
 </form>
 @{
-    var reviews = ViewData["category"]?.ToString() == "all" ? Model.Reviews
-                : Model.Reviews.Where(review => review.Category == @ViewData["category"]?.ToString()).ToList();
-    var sortedReviews = ViewData["sortOrder"]?.ToString() == "date" ? reviews.OrderByDescending(review => review.Date).ToList()
-        : ViewData["sortOrder"]?.ToString() == "popular" ? reviews.OrderByDescending(review => review.Rates.Average(r => r.UserRate)).ToList() : Model.Reviews;
+    string category = string.IsNullOrEmpty(HttpContextAccessor.HttpContext?.Request.Cookies["myPageCategory"]) ? "all" :
+            HttpContextAccessor.HttpContext?.Request.Cookies["myPageCategory"];
+    string sortOrder = string.IsNullOrEmpty(HttpContextAccessor.HttpContext?.Request.Cookies["myPageSortOrder"]) ? "no sort" :
+        HttpContextAccessor.HttpContext?.Request.Cookies["myPageSortOrder"];
+    var reviews = category == "all" ? Model.Reviews
+                : Model.Reviews.Where(review => review.Category == category).ToList();
+    var sortedReviews = sortOrder == "date" ? reviews.OrderByDescending(review => review.Date).ToList()
+        : sortOrder == "popular" ? reviews.OrderByDescending(review => review.Rates.Average(r => r.UserRate)).ToList() : Model.Reviews;
+    <script>
+        document.getElementById('categorySelector').value = "@category";
+        document.getElementById('sortOrderSelector').value = "@sortOrder";
+    </script>
 }
 <table class="table" style="border-style: solid; border-color: red;">
     @foreach (var data in sortedReviews)

@@ -24,7 +24,7 @@ namespace MyNetwork.Services
 
         public async Task CheckOldCreation(int oldCreationId)
         {
-            Creation oldCreation = await _db.Creations.AsNoTracking().Include(c => c.Reviews).FirstOrDefaultAsync(c => c.Id == oldCreationId);
+            Creation oldCreation = await _db.Creations.Include(c => c.Reviews).FirstOrDefaultAsync(c => c.Id == oldCreationId);
             if (oldCreation.Reviews.Count() == 0)
             {
                 _db.Creations.Remove(oldCreation);

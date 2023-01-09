@@ -5,15 +5,13 @@ using MyNetwork.Models;
 using MyNetwork.Services;
 using System.Diagnostics;
 using System.Web;
+using System.Linq;
 
 namespace MyNetwork.Controllers
 {
     public class HomeController : Controller
     {
         private ApplicationContext _db;
-        private static string _category = "all";
-        private static string _searchType = "best views";
-        private static List<string> _tags = new List<string>();
 
         public HomeController(ApplicationContext db)
         {
@@ -24,9 +22,6 @@ namespace MyNetwork.Controllers
         {
             await setParamsAsync();
             ViewData.Model = _db;
-            ViewData.Add("category", _category);
-            ViewData.Add("searchType", _searchType);
-            ViewData.Add("tags", string.Join(' ', _tags));
             ViewData.Add("popular tags", string.Join(' ', _db.Services.Tags.SelectPopularTags()));
             return View();
         }
@@ -71,10 +66,10 @@ namespace MyNetwork.Controllers
 
         public IActionResult ChangeReviewParameters(string category, string searchTupe, string[]? tags = null)
         {
-            _category = category;
-            _searchType = searchTupe;
-            if (searchTupe == "tags" && tags != null) _tags = tags.Skip(1).Distinct().Select(tag => HttpUtility.UrlEncode(tag)).ToList();
-            else _tags = new List<string>();
+            Response.Cookies.Append("homeCategory", category);
+            Response.Cookies.Append("homeSearchType", searchTupe);
+            if (searchTupe == "tags" && tags != null) Response.Cookies.Append("homeTags", string.Join(' ', tags.Skip(1).Distinct().Select(tag => HttpUtility.UrlEncode(tag)).ToList()));
+            else Response.Cookies.Append("homeTags", "");
             return RedirectToAction("Index", "Home");
         }
 
@@ -86,14 +81,11 @@ namespace MyNetwork.Controllers
                 var fullDataReview = await _db.Services.Reviews.GetFullReviewData();
                 List<Review> reviews = await _db.Reviews.FullTextSearchQuery(searchString).ToListAsync();
                 searchResults.AddRange(fullDataReview.Where(r => reviews.Contains(r)));
-                List<Creation> creations = await _db.Creations.FullTextSearchQuery(searchString).ToListAsync();
-                searchResults.AddRange(fullDataReview.Where(r => creations.Contains(r.Creation)));
-                List<string> users = await _db.AspNetUsers.FullTextSearchQuery(searchString).Select(user => user.Id).ToListAsync();
-                searchResults.AddRange(fullDataReview.Where(review => users.Contains(review.AuthorId)));
-                List<int> comments = await _db.Comments.FullTextSearchQuery(searchString).Select(comment => comment.ReviewId).ToListAsync();
-                searchResults.AddRange(fullDataReview.Where(review => comments.Contains(review.Id)));
-                List<int> tags = await _db.Tags.FullTextSearchQuery(searchString).Select(tag => tag.Id).ToListAsync();
-                tags = await _db.ReviewTags.Where(reviewTag => tags.Contains(reviewTag.TagId)).Select(tag => tag.ReviewId).ToListAsync();
+                searchResults.AddRange(fullDataReview.Where(review => _db.Creations.FullTextSearchQuery(searchString).Contains(review.Creation)));
+                searchResults.AddRange(fullDataReview.Where(review => _db.AspNetUsers.FullTextSearchQuery(searchString).Contains(review.Author)));
+                searchResults.AddRange(fullDataReview.Where(review => _db.Comments.FullTextSearchQuery(searchString).Select(c => c.ReviewId).Contains(review.Id)));
+                List<int> tags = new List<int>();
+                await _db.Tags.FullTextSearchQuery(searchString).ForEachAsync(t => tags.AddRange(t.ReviewTags.Select(rt => rt.ReviewId)));
                 searchResults.AddRange(fullDataReview.Where(review => tags.Contains(review.Id)));
             }
             ViewData.Model = searchResults.Distinct().ToList();
@@ -108,14 +100,11 @@ namespace MyNetwork.Controllers
                 ImageService.setToken(_db.AdminDatas.FirstOrDefault(data => data.Name == "token") == null ? "" :
                     _db.AdminDatas.FirstOrDefault(data => data.Name == "token").Value);
             }
-            if (Response.HttpContext.Request.Cookies["language"] == "ru")
-            {   
-                TextModel.setContext("ru");
-            }
-            else
-            {
-                TextModel.setContext("en");
-            }
+            if (Response.HttpContext.Request.Cookies["language"] == "ru") TextModel.setContext("ru");
+            else TextModel.setContext("en");
+            if (string.IsNullOrEmpty(Response.HttpContext.Request.Cookies["homeCategory"])) Response.Cookies.Append("homeCategory", "all");
+            if (string.IsNullOrEmpty(Response.HttpContext.Request.Cookies["homeSearchType"])) Response.Cookies.Append("homeSearchType", "last views");
+            if (string.IsNullOrEmpty(Response.HttpContext.Request.Cookies["homeTags"])) Response.Cookies.Append("homeTags", "");
             await setUserSettings();
         }
 
@@ -123,12 +112,12 @@ namespace MyNetwork.Controllers
         {
             if (User.Identity?.Name! == null)
             {
-                CurrentUserSettings.CurrentUser = new User();
-                CurrentUserSettings.AdminMode = "";
+                Response.Cookies.Append("currentUser", "");
+                Response.Cookies.Append("adminMode", "");
             }
-            else if (CurrentUserSettings.CurrentUser.UserName == null)
+            else if (string.IsNullOrEmpty(Response.HttpContext.Request.Cookies["currentUser"]))
             {
-                CurrentUserSettings.CurrentUser = await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == User.Identity.Name);
+                Response.Cookies.Append("currentUser", (await _db.AspNetUsers.FirstOrDefaultAsync(user => user.UserName == User.Identity.Name)).UserName);
             }
         }
     }

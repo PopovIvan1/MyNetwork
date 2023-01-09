@@ -1,4 +1,5 @@
 ﻿@model ApplicationContext
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 
 @{
     ViewData["Title"] = "Home Page";
@@ -21,9 +22,12 @@
                     <option value="books">@TextModel.Context["books"]</option>
                 </select>
             </div>
-            <script>
-                document.getElementById('categorySelector').value = "@ViewData["category"]?.ToString()";
-            </script>
+            @if (!string.IsNullOrEmpty(HttpContextAccessor.HttpContext?.Request.Cookies["homeCategory"]))
+            {
+                <script>
+                    document.getElementById('categorySelector').value = "@HttpContextAccessor.HttpContext?.Request.Cookies["homeCategory"]";
+                </script>
+            }
             <p></p>
             <div class="form-floating">
                 @TextModel.Context["select search"]
@@ -34,9 +38,12 @@
                 </select>
             </div>
             <p></p>
-            <script>
-                document.getElementById('searchTypeSelector').value = "@ViewData["searchType"]?.ToString()";
-            </script>
+            @if (!string.IsNullOrEmpty(HttpContextAccessor.HttpContext?.Request.Cookies["homeSearchType"]))
+            {
+                <script>
+                    document.getElementById('searchTypeSelector').value = "@HttpContextAccessor.HttpContext?.Request.Cookies["homeSearchType"]";
+                </script>
+            }
             <div class="form-floating" id="tagsLocation">
                 <script>
                     if (document.getElementById('searchTypeSelector').value != "tags") {
@@ -64,8 +71,13 @@
                     }
                 </datalist>
             </div>
+            @{
+                string tags = HttpContextAccessor.HttpContext?.Request.Cookies["homeTags"] == null ? "" : HttpContextAccessor.HttpContext?.Request.Cookies["homeTags"];
+                string category = HttpContextAccessor.HttpContext?.Request.Cookies["homeCategory"] == null ? "all" : HttpContextAccessor.HttpContext?.Request.Cookies["homeCategory"];
+                string searchType = HttpContextAccessor.HttpContext?.Request.Cookies["homeSearchType"] == null ? "best views" : HttpContextAccessor.HttpContext?.Request.Cookies["homeSearchType"];
+            }
             <script>
-                let tagValues = "@ViewData["tags"].ToString()".split(' ');
+                let tagValues = "@HttpContextAccessor.HttpContext?.Request.Cookies["homeTags"]".split(' ');
                 tagValues.forEach(item => {
                     document.getElementById('tag').value = decodeURI(item);
                     if (item != "") {
@@ -79,7 +91,7 @@
     <p></p>
     <form asp-controller="Review" asp-action="ReviewPage" class="form-horizontal">
         <table class="table" style="border-style: solid; border-color: red; ">
-            @foreach (var data in await Model.Services.Reviews.SelectReviewsWithSettings(ViewData["category"]?.ToString(), ViewData["searchType"]?.ToString(), ViewData["tags"].ToString()))
+            @foreach (var data in await Model.Services.Reviews.SelectReviewsWithSettings(HttpContextAccessor.HttpContext?.Request.Cookies["homeCategory"], HttpContextAccessor.HttpContext?.Request.Cookies["homeSearchType"], HttpContextAccessor.HttpContext?.Request.Cookies["homeTags"]))
             {
                 <tr>
                     <td><button type="submit" class="btn btn-primary" name="review" value="@data.Id"><i class="bi bi-eyeglasses"></i> @TextModel.Context["watch"]</button></td>
